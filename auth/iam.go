@@ -51,6 +51,15 @@ type Account struct {
 	UserID    int    `json:"userID"`
 	GroupID   int    `json:"groupID"`
 	ProjectID int    `json:"projectID"`
+	// SigningKey is a pre-derived SigV4 signing key: the AWS4 HMAC chain
+	// already folded over the credential scope (date, region, service).
+	// When set, signature verification uses it directly and Secret may be
+	// empty — for IAM services whose backing store holds the secret in an
+	// external system (e.g. a KMS) that only releases derived keys. A
+	// derived key is only valid for the credential scope it was derived
+	// for, so accounts carrying one must be resolved per request rather
+	// than cached across scopes.
+	SigningKey []byte `json:"-"`
 }
 
 type ListUserAccountsResult struct {
