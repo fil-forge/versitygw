@@ -186,7 +186,7 @@ func TestAuthorizePostObject_SignedRequest(t *testing.T) {
 		map[string]string{"bucket": "mybucket"},
 		[]any{"starts-with", "$key", "uploads/"},
 	})
-	sig, err := utils.SignPostPolicy(policyB64, dateShort, region, secretKey)
+	sig, err := utils.SignPostPolicy(policyB64, dateShort, region, utils.SigningCred{Secret: secretKey})
 	assert.NoError(t, err)
 
 	var gotAuthenticated bool

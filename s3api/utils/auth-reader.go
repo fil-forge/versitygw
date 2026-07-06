@@ -53,7 +53,7 @@ const (
 )
 
 // CheckValidSignature validates the ctx v4 auth signature
-func CheckValidSignature(ctx fiber.Ctx, auth AuthData, secret, checksum string, tdate time.Time, contentLen int64) (string, error) {
+func CheckValidSignature(ctx fiber.Ctx, auth AuthData, cred SigningCred, checksum string, tdate time.Time, contentLen int64) (string, error) {
 	signedHdrs := strings.Split(auth.SignedHeaders, ";")
 
 	// Create a new http request instance from fasthttp request
@@ -67,11 +67,14 @@ func CheckValidSignature(ctx fiber.Ctx, auth AuthData, secret, checksum string, 
 	signMeta, err := signer.SignHTTP(req.Context(),
 		aws.Credentials{
 			AccessKeyID:     auth.Access,
-			SecretAccessKey: secret,
+			SecretAccessKey: cred.Secret,
 		},
 		req, checksum, service, auth.Region, tdate, signedHdrs,
 		func(options *v4.SignerOptions) {
 			options.DisableURIPathEscaping = true
+			if len(cred.SigningKey) > 0 {
+				options.KeyDerivator = v4.StaticKeyDerivator(cred.SigningKey)
+			}
 			if debuglogger.IsDebugEnabled() {
 				options.LogSigning = true
 				options.Logger = logging.NewStandardLogger(os.Stderr)
@@ -245,8 +248,11 @@ func removeSpace(str string) string {
 	return b.String()
 }
 
-func SignPostPolicy(base64Policy, yyyymmdd, region, secretKey string) (string, error) {
-	signingKey := deriveSigningKey(secretKey, yyyymmdd, region)
+func SignPostPolicy(base64Policy, yyyymmdd, region string, cred SigningCred) (string, error) {
+	signingKey := cred.SigningKey
+	if len(signingKey) == 0 {
+		signingKey = deriveSigningKey(cred.Secret, yyyymmdd, region)
+	}
 	sig := hmacSHA256(signingKey, []byte(base64Policy))
 	return hex.EncodeToString(sig), nil
 }
