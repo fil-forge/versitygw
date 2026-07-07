@@ -23,10 +23,10 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/versity/versitygw/backend"
-	"github.com/versity/versitygw/plugins"
-	"github.com/versity/versitygw/s3err"
-	"github.com/versity/versitygw/s3response"
+	"github.com/fil-forge/versitygw/backend"
+	"github.com/fil-forge/versitygw/plugins"
+	"github.com/fil-forge/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3response"
 )
 
 // Backend is the exported plugin entry point.

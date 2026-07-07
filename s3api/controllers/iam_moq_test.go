@@ -4,7 +4,7 @@
 package controllers
 
 import (
-	"github.com/versity/versitygw/auth"
+	"github.com/fil-forge/versitygw/auth"
 	"sync"
 )
 

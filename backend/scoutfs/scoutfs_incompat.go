@@ -19,7 +19,7 @@ package scoutfs
 import (
 	"fmt"
 
-	"github.com/versity/versitygw/backend"
+	"github.com/fil-forge/versitygw/backend"
 )
 
 type ScoutFS struct {

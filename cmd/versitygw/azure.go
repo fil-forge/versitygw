@@ -18,7 +18,7 @@ import (
 	"fmt"
 
 	"github.com/urfave/cli/v2"
-	"github.com/versity/versitygw/backend/azure"
+	"github.com/fil-forge/versitygw/backend/azure"
 )
 
 var (

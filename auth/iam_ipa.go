@@ -36,7 +36,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/versity/versitygw/debuglogger"
+	"github.com/fil-forge/versitygw/debuglogger"
 )
 
 const IpaVersion = "2.254"

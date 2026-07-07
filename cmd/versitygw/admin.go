@@ -35,8 +35,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
 	"github.com/urfave/cli/v2"
-	"github.com/versity/versitygw/auth"
-	"github.com/versity/versitygw/s3response"
+	"github.com/fil-forge/versitygw/auth"
+	"github.com/fil-forge/versitygw/s3response"
 )
 
 var (

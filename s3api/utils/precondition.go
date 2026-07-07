@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/versity/versitygw/debuglogger"
+	"github.com/fil-forge/versitygw/debuglogger"
 )
 
 // ConditionalHeaders holds the conditional header values

@@ -18,8 +18,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/versity/versitygw/s3err"
-	"github.com/versity/versitygw/s3response"
+	"github.com/fil-forge/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3response"
 )
 
 func TestS3ApiController_ListBuckets(t *testing.T) {

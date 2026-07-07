@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 type Role string

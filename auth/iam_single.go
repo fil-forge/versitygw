@@ -15,7 +15,7 @@
 package auth
 
 import (
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 // IAMServiceSingle manages the single tenant (root-only) IAM service

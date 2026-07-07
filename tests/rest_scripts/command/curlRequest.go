@@ -2,7 +2,7 @@ package command
 
 import (
 	"fmt"
-	"github.com/versity/versitygw/tests/rest_scripts/logger"
+	"github.com/fil-forge/versitygw/tests/rest_scripts/logger"
 	"net/url"
 	"os"
 	"path/filepath"

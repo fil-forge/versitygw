@@ -20,8 +20,8 @@ import (
 	"math"
 
 	"github.com/urfave/cli/v2"
-	"github.com/versity/versitygw/backend/meta"
-	"github.com/versity/versitygw/backend/posix"
+	"github.com/fil-forge/versitygw/backend/meta"
+	"github.com/fil-forge/versitygw/backend/posix"
 )
 
 var (

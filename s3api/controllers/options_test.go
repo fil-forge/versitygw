@@ -22,10 +22,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/versity/versitygw/auth"
-	"github.com/versity/versitygw/s3api/middlewares"
-	"github.com/versity/versitygw/s3api/utils"
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/auth"
+	"github.com/fil-forge/versitygw/s3api/middlewares"
+	"github.com/fil-forge/versitygw/s3api/utils"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 func TestS3ApiController_CORSOptions(t *testing.T) {

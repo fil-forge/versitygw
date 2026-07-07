@@ -18,8 +18,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/versity/versitygw/s3err"
-	"github.com/versity/versitygw/s3response"
+	"github.com/fil-forge/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3response"
 )
 
 // ListMultipartUploads initializes a multipart upload lister and calls Run()

@@ -20,7 +20,7 @@ import (
 	"plugin"
 
 	"github.com/urfave/cli/v2"
-	"github.com/versity/versitygw/plugins"
+	"github.com/fil-forge/versitygw/plugins"
 )
 
 func pluginCommand() *cli.Command {
