@@ -23,7 +23,7 @@ import (
 	"syscall"
 
 	"github.com/pkg/xattr"
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 var (

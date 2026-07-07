@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 func encodePolicyForTest(t *testing.T, expiration time.Time, conditions []any, rawBase64 bool) string {

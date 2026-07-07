@@ -29,13 +29,13 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
-	"github.com/versity/versitygw/auth"
-	"github.com/versity/versitygw/metrics"
-	"github.com/versity/versitygw/s3api/utils"
-	"github.com/versity/versitygw/s3err"
-	"github.com/versity/versitygw/s3event"
-	"github.com/versity/versitygw/s3log"
-	"github.com/versity/versitygw/s3response"
+	"github.com/fil-forge/versitygw/auth"
+	"github.com/fil-forge/versitygw/metrics"
+	"github.com/fil-forge/versitygw/s3api/utils"
+	"github.com/fil-forge/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3event"
+	"github.com/fil-forge/versitygw/s3log"
+	"github.com/fil-forge/versitygw/s3response"
 )
 
 var (

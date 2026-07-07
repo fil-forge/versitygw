@@ -16,10 +16,10 @@ package middlewares
 
 import (
 	"github.com/gofiber/fiber/v3"
-	"github.com/versity/versitygw/metrics"
-	"github.com/versity/versitygw/s3api/utils"
-	"github.com/versity/versitygw/s3err"
-	"github.com/versity/versitygw/s3log"
+	"github.com/fil-forge/versitygw/metrics"
+	"github.com/fil-forge/versitygw/s3api/utils"
+	"github.com/fil-forge/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3log"
 	"golang.org/x/sync/semaphore"
 )
 

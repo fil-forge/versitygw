@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	"github.com/urfave/cli/v2"
-	"github.com/versity/versitygw/tests/integration"
+	"github.com/fil-forge/versitygw/tests/integration"
 )
 
 var (

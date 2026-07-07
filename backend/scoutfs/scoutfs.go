@@ -17,7 +17,7 @@ package scoutfs
 import (
 	"io/fs"
 
-	"github.com/versity/versitygw/backend"
+	"github.com/fil-forge/versitygw/backend"
 )
 
 // ScoutfsOpts are the options for the ScoutFS backend

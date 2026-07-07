@@ -18,8 +18,8 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/versity/versitygw/auth"
-	"github.com/versity/versitygw/s3api/utils"
+	"github.com/fil-forge/versitygw/auth"
+	"github.com/fil-forge/versitygw/s3api/utils"
 )
 
 func SetDefaultValues(root RootUserConfig, region string) fiber.Handler {

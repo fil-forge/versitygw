@@ -31,9 +31,9 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
-	"github.com/versity/versitygw/backend"
-	"github.com/versity/versitygw/s3err"
-	"github.com/versity/versitygw/s3response"
+	"github.com/fil-forge/versitygw/backend"
+	"github.com/fil-forge/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3response"
 )
 
 func TestCreateHttpRequestFromCtx(t *testing.T) {

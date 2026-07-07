@@ -23,7 +23,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttputil"
-	v4 "github.com/versity/versitygw/aws/signer/v4"
+	v4 "github.com/fil-forge/versitygw/aws/signer/v4"
 )
 
 func TestAuthParse(t *testing.T) {

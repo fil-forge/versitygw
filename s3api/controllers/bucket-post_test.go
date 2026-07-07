@@ -28,12 +28,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/versity/versitygw/auth"
-	"github.com/versity/versitygw/s3api/middlewares"
-	"github.com/versity/versitygw/s3api/utils"
-	"github.com/versity/versitygw/s3err"
-	"github.com/versity/versitygw/s3event"
-	"github.com/versity/versitygw/s3response"
+	"github.com/fil-forge/versitygw/auth"
+	"github.com/fil-forge/versitygw/s3api/middlewares"
+	"github.com/fil-forge/versitygw/s3api/utils"
+	"github.com/fil-forge/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3event"
+	"github.com/fil-forge/versitygw/s3response"
 )
 
 func TestS3ApiController_DeleteObjects(t *testing.T) {

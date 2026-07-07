@@ -26,7 +26,7 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/logger"
 	"github.com/gofiber/fiber/v3/middleware/recover"
 	"github.com/gofiber/fiber/v3/middleware/static"
-	"github.com/versity/versitygw/s3api/utils"
+	"github.com/fil-forge/versitygw/s3api/utils"
 )
 
 // ServerConfig holds the server configuration

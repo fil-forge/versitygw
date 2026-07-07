@@ -25,7 +25,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/segmentio/kafka-go"
-	"github.com/versity/versitygw/s3response"
+	"github.com/fil-forge/versitygw/s3response"
 )
 
 var sequencer = 0
