@@ -30,7 +30,7 @@ export RUN_USERS=true
 @test "REST - empty message" {
   test_file="test_file"
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1249"
+    skip "https://github.com/fil-forge/versitygw/issues/1249"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -55,7 +55,7 @@ export RUN_USERS=true
 # tags: curl,ListBuckets,required-headers,Authorization,invalid-header
 @test "REST - invalid authorization scheme" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1705"
+    skip "https://github.com/fil-forge/versitygw/issues/1705"
   fi
   run list_buckets_check_authorization_scheme_error
   assert_success
@@ -82,7 +82,7 @@ export RUN_USERS=true
 # tags: curl,ListBuckets,required-headers,Authorization,x-amz-date,invalid-header
 @test "REST - incorrect year/month/day" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1514"
+    skip "https://github.com/fil-forge/versitygw/issues/1514"
   fi
   run list_buckets_check_request_time_too_skewed_error
   assert_success
@@ -109,7 +109,7 @@ export RUN_USERS=true
 # tags: openssl,ListBuckets,required-headers,host,invalid-header
 @test "REST - missing host parameter" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1530"
+    skip "https://github.com/fil-forge/versitygw/issues/1530"
   fi
   run send_openssl_go_command "400" "-missingHostParam"
   assert_success
@@ -131,7 +131,7 @@ export RUN_USERS=true
 # tags: curl,ListBuckets,max-buckets,continuation-token
 @test "REST - list buckets - continuation token isn't bucket name" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1399"
+    skip "https://github.com/fil-forge/versitygw/issues/1399"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -195,7 +195,7 @@ export RUN_USERS=true
     skip "skip versitygw-specific users tests"
   fi
   if [ "$DIRECT" == "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1704"
+    skip "https://github.com/fil-forge/versitygw/issues/1704"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -224,7 +224,7 @@ export RUN_USERS=true
 # tags: curl,invalid-method
 @test "REST - service route - invalid POST route" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1810"
+    skip "https://github.com/fil-forge/versitygw/issues/1810"
   fi
   run get_file_name
   assert_success
@@ -244,7 +244,7 @@ export RUN_USERS=true
 # tags: curl,invalid-method
 @test "REST - service route - invalid method" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1846"
+    skip "https://github.com/fil-forge/versitygw/issues/1846"
   fi
   run send_rest_go_command_expect_error "400" "BadRequest" "An error occurred when parsing the HTTP request" "-method" "GETS"
   assert_success
@@ -259,7 +259,7 @@ export RUN_USERS=true
 # tags: curl,ListBuckets,bucket-region,invalid-query
 @test "REST - ListBuckets - invalid bucket-region query" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1923"
+    skip "https://github.com/fil-forge/versitygw/issues/1923"
   fi
   local invalid_region="abc"
 
@@ -278,7 +278,7 @@ export RUN_USERS=true
 # tags: curl,ListBuckets,bucket-region
 @test "REST - ListBuckets - incorrect bucket region" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1930"
+    skip "https://github.com/fil-forge/versitygw/issues/1930"
   fi
   local test_region="us-east-1"
   if [ "$AWS_REGION" == "us-east-1" ]; then
@@ -355,7 +355,7 @@ export RUN_USERS=true
 # tags: curl,ListBuckets,required-headers,x-amz-date
 @test "REST - ListBuckets - omit date" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1934"
+    skip "https://github.com/fil-forge/versitygw/issues/1934"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -371,7 +371,7 @@ export RUN_USERS=true
 # tags: curl,ListBuckets,required-headers,x-amz-date
 @test "REST - ListBuckets - invalid date" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1934"
+    skip "https://github.com/fil-forge/versitygw/issues/1934"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success

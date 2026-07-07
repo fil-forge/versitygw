@@ -55,7 +55,7 @@ jobs:
 #          curl https://dl.min.io/client/mc/release/linux-amd64/mc --create-dirs -o /usr/local/bin/mc
 #          chmod 755 /usr/local/bin/mc
 
-      # see https://github.com/versity/versitygw/issues/1034
+      # see https://github.com/fil-forge/versitygw/issues/1034
       - name: Install AWS cli
         run: |
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.22.35.zip" -o "awscliv2.zip" 

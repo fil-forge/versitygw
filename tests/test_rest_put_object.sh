@@ -96,7 +96,7 @@ export RUN_USERS=true
 # tags: curl, PutObject, content-length, invalid-header
 @test "REST - put object, missing Content-Length" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1321"
+    skip "https://github.com/fil-forge/versitygw/issues/1321"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -328,7 +328,7 @@ export RUN_USERS=true
 # tags: curl, PutObject, object-lock, retention, x-amz-object-lock-retain-until-date, x-amz-object-lock-mode, content-md5, invalid-header
 @test "REST - PutObject - x-amz-object-lock-retain-until-date - earlier date" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1734"
+    skip "https://github.com/fil-forge/versitygw/issues/1734"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -347,7 +347,7 @@ export RUN_USERS=true
 # tags: curl, PutObject, object-lock, retention, x-amz-object-lock-mode, x-amz-object-lock-retain-until-date, content-md5, invalid-header
 @test "REST - PutObject - x-amz-object-lock-mode - invalid mode" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1736"
+    skip "https://github.com/fil-forge/versitygw/issues/1736"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -370,7 +370,7 @@ export RUN_USERS=true
 # tags: curl, PutObject, object-lock, retention, versioning, content-md5, invalid-header
 @test "TEST - REST - PutObject - not allowed without content-MD5 with lock configuration" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1740"
+    skip "https://github.com/fil-forge/versitygw/issues/1740"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -481,7 +481,7 @@ export RUN_USERS=true
 # tags: curl, PutObject, object-lock, legal-hold, x-amz-object-lock-legal-hold, invalid-header
 @test "PutObject - x-amz-object-lock-legal-hold - invalid value" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1775"
+    skip "https://github.com/fil-forge/versitygw/issues/1775"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -504,7 +504,7 @@ export RUN_USERS=true
 # tags: curl, PutObject, object-lock, legal-hold, x-amz-object-lock-legal-hold, content-md5, invalid-header
 @test "PutObject - x-amz-object-lock-legal-hold - no Content-MD5" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1776"
+    skip "https://github.com/fil-forge/versitygw/issues/1776"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success

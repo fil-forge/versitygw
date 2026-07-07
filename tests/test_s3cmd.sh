@@ -105,14 +105,14 @@ export RUN_USERS=true
 
 # tags: s3cmd, PutBucketAcl
 @test "test_put_bucket_acl" {
-  skip "https://github.com/versity/versitygw/issues/963"
+  skip "https://github.com/fil-forge/versitygw/issues/963"
   test_put_bucket_acl_s3cmd
 }
 
 # tags: s3cmd, PutPublicAccessBlock
 @test 's3cmd - can enable public ACLs for bucket' {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1154"
+    skip "https://github.com/fil-forge/versitygw/issues/1154"
   fi
   run setup_bucket "$BUCKET_ONE_NAME"
   assert_success
