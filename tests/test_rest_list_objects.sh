@@ -47,7 +47,7 @@ source ./tests/drivers/objects_and_versions.sh
 # tags: curl,ListObjectsV2,continuation-token,invalid-query
 @test "REST - list objects v2 - invalid continuation token" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/993"
+    skip "https://github.com/fil-forge/versitygw/issues/993"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -89,7 +89,7 @@ source ./tests/drivers/objects_and_versions.sh
 # tags: curl,ListObjectsV2,bucket-region,x-amz-bucket-region
 @test "REST - ListObjectsV2 - includes bucket header" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1814"
+    skip "https://github.com/fil-forge/versitygw/issues/1814"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -135,7 +135,7 @@ source ./tests/drivers/objects_and_versions.sh
 # tags: curl,ListObjects,minimal-request
 @test "REST - list objects v1 - no NextMarker without delimiter" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/999"
+    skip "https://github.com/fil-forge/versitygw/issues/999"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -170,7 +170,7 @@ source ./tests/drivers/objects_and_versions.sh
 # tags: curl,ListObjects,encoding-type,invalid-query
 @test "REST - ListObjects - invalid encoding" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1985"
+    skip "https://github.com/fil-forge/versitygw/issues/1985"
   fi
   run objects_versions_invalid_encoding ""
   assert_success
@@ -179,7 +179,7 @@ source ./tests/drivers/objects_and_versions.sh
 # tags: curl,ListObjects,encoding-type
 @test "REST - ListObjects - encoding success" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1985"
+    skip "https://github.com/fil-forge/versitygw/issues/1985"
   fi
 
   run objects_versions_encoding_success "" "ListBucketResult" "Contents"
@@ -261,7 +261,7 @@ source ./tests/drivers/objects_and_versions.sh
 # tags: curl,ListObjects,start-after,invalid-query
 @test "ListObjectsV1 - start-after - error" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2004"
+    skip "https://github.com/fil-forge/versitygw/issues/2004"
   fi
   run setup_bucket_and_files_v3 "$BUCKET_ONE_NAME" 2
   assert_success
@@ -280,7 +280,7 @@ source ./tests/drivers/objects_and_versions.sh
 # tags: curl,ListObjectsV2,start-after,continuation-token
 @test "ListObjectsV1 - start-after - doesn't include continuation token" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2007"
+    skip "https://github.com/fil-forge/versitygw/issues/2007"
   fi
   run setup_bucket_and_files_v3 "$BUCKET_ONE_NAME" 2
   assert_success

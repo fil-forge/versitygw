@@ -1,4 +1,4 @@
-module github.com/versity/versitygw
+module github.com/fil-forge/versitygw
 
 go 1.25.0
 

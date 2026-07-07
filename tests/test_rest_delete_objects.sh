@@ -37,7 +37,7 @@ source ./tests/setup.sh
 # tags: curl, DeleteObjects, malformed-message
 @test "REST - DeleteObjects - no objects added to payload" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2109"
+    skip "https://github.com/fil-forge/versitygw/issues/2109"
   fi
   run setup_bucket_and_file_v3 "$BUCKET_ONE_NAME"
   assert_success
@@ -74,7 +74,7 @@ source ./tests/setup.sh
 # tags: curl, DeleteObjects
 @test "REST - DeleteObjects - ETag mismatch" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2112"
+    skip "https://github.com/fil-forge/versitygw/issues/2112"
   fi
   run setup_bucket_and_file_v3 "$BUCKET_ONE_NAME"
   assert_success
@@ -115,7 +115,7 @@ source ./tests/setup.sh
 # tags: curl, DeleteObjects, versioning
 @test "REST - DeleteObjects - version ID mismatch" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2119"
+    skip "https://github.com/fil-forge/versitygw/issues/2119"
   fi
   run setup_bucket_and_file_v3 "$BUCKET_ONE_NAME"
   assert_success
@@ -162,7 +162,7 @@ source ./tests/setup.sh
 
 @test "REST - DeleteObjects - quiet mode" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2124"
+    skip "https://github.com/fil-forge/versitygw/issues/2124"
   fi
   run setup_bucket_and_file_v3 "$BUCKET_ONE_NAME"
   assert_success

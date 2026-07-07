@@ -8,7 +8,7 @@ Please do **not** create public issues or pull requests that contain details abo
 
 Instead, report the issue using GitHub's private **Security Advisories** feature:
 
-- Go to [versitygw's Security Advisories page](https://github.com/versity/versitygw/security/advisories)
+- Go to [versitygw's Security Advisories page](https://github.com/fil-forge/versitygw/security/advisories)
 - Click on **"Report a vulnerability"**
 
 We aim to respond within **2 business days** and work with you to quickly resolve the issue.
