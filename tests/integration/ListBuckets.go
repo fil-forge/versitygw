@@ -227,6 +227,13 @@ func ListBuckets_with_prefix(s *S3Conf) error {
 			return fmt.Errorf("expected prefix to be %v, instead got %v",
 				prefix, getString(out.Prefix))
 		}
+		// ListBuckets returns buckets ordered lexically by name; compareBuckets
+		// is order-sensitive, so sort the expected set to match (creation order
+		// only coincides with lexical order within a single digit band of the
+		// bucket-name counter).
+		sort.Slice(prefixedBuckets, func(i, j int) bool {
+			return *prefixedBuckets[i].Name < *prefixedBuckets[j].Name
+		})
 		if !compareBuckets(out.Buckets, prefixedBuckets, ignore...) {
 			return fmt.Errorf("expected list buckets result to be %v, instead got %v",
 				prefixedBuckets, out.Buckets)
@@ -418,9 +425,18 @@ func ListBuckets_success(s *S3Conf) error {
 			return fmt.Errorf("expected owner to be %v, instead got %v",
 				s.awsID, getString(out.Owner.ID))
 		}
-		if !compareBuckets(out.Buckets, buckets, ignore...) {
+		// ListBuckets returns buckets ordered lexically by name; compareBuckets
+		// is order-sensitive, so compare against a lexically-sorted copy (the
+		// bucket-name counter's creation order only matches lexical order within
+		// a single digit band). Keep `buckets` in creation order for teardown,
+		// which relies on buckets[0] being the action bucket.
+		expected := append([]types.Bucket(nil), buckets...)
+		sort.Slice(expected, func(i, j int) bool {
+			return *expected[i].Name < *expected[j].Name
+		})
+		if !compareBuckets(out.Buckets, expected, ignore...) {
 			return fmt.Errorf("expected list buckets result to be %v, instead got %v",
-				sprintBuckets(buckets), sprintBuckets(out.Buckets))
+				sprintBuckets(expected), sprintBuckets(out.Buckets))
 		}
 
 		for _, elem := range buckets[1:] {
