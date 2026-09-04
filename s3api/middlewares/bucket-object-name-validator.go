@@ -33,8 +33,16 @@ func BucketObjectNameValidator() fiber.Handler {
 
 		// check if the provided object name is valid
 		// skip for empty objects: e.g bucket operations: HeadBucket...
-		if object != "" && !utils.IsObjectNameValid(object) {
-			return s3err.GetAPIError(s3err.ErrBadRequest)
+		if object != "" {
+			// A C1 control character in the key is unparseable to S3: reject
+			// pre-auth with InvalidURI, matching AWS. C0 controls (CR/LF/ESC)
+			// are legal and handled by the general validity check below.
+			if utils.ContainsC1ControlChar(object) {
+				return s3err.GetAPIError(s3err.ErrInvalidURI)
+			}
+			if !utils.IsObjectNameValid(object) {
+				return s3err.GetAPIError(s3err.ErrBadRequest)
+			}
 		}
 
 		return nil
