@@ -757,6 +757,7 @@ func TestS3ApiController_GetObject(t *testing.T) {
 					Headers: map[string]*string{
 						"x-amz-delete-marker": utils.GetStringPtr("true"),
 						"Last-Modified":       utils.GetStringPtr(tm.UTC().Format(timefmt)),
+						"ETag":                nil,
 					},
 					MetaOpts: &MetaOptions{
 						BucketOwner: "root",
