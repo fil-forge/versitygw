@@ -18,8 +18,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/debuglogger"
+	"github.com/gofiber/fiber/v3"
 )
 
 // ConditionalHeaders holds the conditional header values
@@ -102,28 +102,16 @@ func ParsePreconditionDateHeader(date string) *time.Time {
 	if date == "" {
 		return nil
 	}
-	// try to parse as RFC1123
-	parsed, err := time.Parse(time.RFC1123, date)
-	if err == nil {
-		// ignore future dates
-		if parsed.After(time.Now()) {
-			return nil
-		}
-
+	// A future date is not ignored: S3 evaluates If-Modified-Since /
+	// If-Unmodified-Since against the object's last-modified time regardless
+	// (a future If-Modified-Since on an unmodified object yields 304). The
+	// comparison is EvaluatePreconditions' job, not the parser's.
+	if parsed, err := time.Parse(time.RFC1123, date); err == nil {
 		return &parsed
 	}
-
-	// try to parse as RFC3339
-	parsed, err = time.Parse(time.RFC3339, date)
-	if err == nil {
-		// ignore future dates
-		if parsed.After(time.Now()) {
-			return nil
-		}
-
+	if parsed, err := time.Parse(time.RFC3339, date); err == nil {
 		return &parsed
 	}
-
 	return nil
 }
 

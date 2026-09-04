@@ -23,12 +23,12 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/debuglogger"
 	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/fil-forge/versitygw/s3err"
 	"github.com/fil-forge/versitygw/s3response"
+	"github.com/gofiber/fiber/v3"
 )
 
 func (c S3ApiController) GetObjectTagging(ctx fiber.Ctx) (*Response, error) {
@@ -502,6 +502,11 @@ func (c S3ApiController) GetObject(ctx fiber.Ctx) (*Response, error) {
 			headers = map[string]*string{
 				"x-amz-delete-marker": utils.GetStringPtr("true"),
 				"Last-Modified":       utils.FormatDatePtrToString(res.LastModified, timefmt),
+				// A 304 Not Modified must carry the object's ETag (RFC 7232
+				// §4.1). Backends surface it by returning a non-nil result
+				// alongside the not-modified error; nil ETag values are
+				// dropped when the response is written.
+				"ETag": res.ETag,
 			}
 		}
 		return &Response{
