@@ -23,10 +23,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/logger"
-	"github.com/gofiber/fiber/v3/middleware/recover"
-	"github.com/valyala/fasthttp"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/debuglogger"
@@ -38,6 +34,10 @@ import (
 	"github.com/fil-forge/versitygw/s3event"
 	"github.com/fil-forge/versitygw/s3log"
 	"github.com/fil-forge/versitygw/webui"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/logger"
+	"github.com/gofiber/fiber/v3/middleware/recover"
+	"github.com/valyala/fasthttp"
 )
 
 const (
@@ -338,6 +338,14 @@ func WithSocketPerm(perm os.FileMode) Option {
 // bucket/object ACL headers
 func WithDisableACL() Option {
 	return func(s *S3ApiServer) { s.Router.disableACL = true }
+}
+
+// WithDisableObjNameTraversalCheck disables the path-traversal rejection in
+// object-name validation. Backends that store keys opaquely (not as filesystem
+// paths) set this so keys like "../file.txt" are accepted and stored literally,
+// matching AWS. The empty/"."/".."/"/" and control-character rejections stay on.
+func WithDisableObjNameTraversalCheck() Option {
+	return func(s *S3ApiServer) { s.Router.disableObjNameTraversal = true }
 }
 
 // WithOnListen registers a callback that is invoked once the server is bound
