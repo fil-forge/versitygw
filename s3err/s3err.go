@@ -523,7 +523,7 @@ var errorCodeResponse = map[ErrorCode]APIError{
 		HTTPStatusCode: http.StatusNotFound,
 	},
 	ErrObjectAttributesInvalidHeader: {
-		Code:           "InvalidRequest",
+		Code:           "InvalidArgument",
 		Description:    "The x-amz-object-attributes header specifying the attributes to be retrieved is either missing or empty",
 		HTTPStatusCode: http.StatusBadRequest,
 	},
