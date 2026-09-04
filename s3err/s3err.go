@@ -479,7 +479,7 @@ var errorCodeResponse = map[ErrorCode]APIError{
 	},
 	ErrInvalidURI: {
 		Code:           "InvalidURI",
-		Description:    "The specified URI couldn't be parsed.",
+		Description:    "Couldn't parse the specified URI.",
 		HTTPStatusCode: http.StatusBadRequest,
 	},
 	ErrObjectLockConfigurationNotFound: {
