@@ -15,9 +15,22 @@
 package utils
 
 func IsObjectNameValid(name string) bool {
+	return IsObjectNameValidWithTraversal(name, true)
+}
+
+// IsObjectNameValidWithTraversal validates an object key. The empty/"."/".."/"/"
+// rejections always apply; the path-traversal (non-local) rejection applies only
+// when checkTraversal is set. Backends that store keys as opaque strings rather
+// than filesystem paths pass false, since a key like "../file.txt" is a legal
+// literal S3 key for them and carries no traversal risk.
+func IsObjectNameValidWithTraversal(name string, checkTraversal bool) bool {
 	switch clean(name) {
 	case "", ".", "..", "/":
 		return false
+	}
+
+	if !checkTraversal {
+		return true
 	}
 
 	return isObjectLocal(name)

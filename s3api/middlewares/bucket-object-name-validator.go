@@ -20,9 +20,11 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// BucketObjectNameValidator extracts and validates
-// the bucket and object names from the request URI.
-func BucketObjectNameValidator() fiber.Handler {
+// BucketObjectNameValidator extracts and validates the bucket and object names
+// from the request URI. checkTraversal enables the path-traversal (non-local
+// key) rejection, which suits filesystem-backed backends; backends that store
+// keys opaquely pass false so keys like "../file.txt" are accepted literally.
+func BucketObjectNameValidator(checkTraversal bool) fiber.Handler {
 	return func(ctx fiber.Ctx) error {
 		bucket, object := parsePath(ctx.Path())
 
@@ -40,7 +42,7 @@ func BucketObjectNameValidator() fiber.Handler {
 			if utils.ContainsC1ControlChar(object) {
 				return s3err.GetAPIError(s3err.ErrInvalidURI)
 			}
-			if !utils.IsObjectNameValid(object) {
+			if !utils.IsObjectNameValidWithTraversal(object, checkTraversal) {
 				return s3err.GetAPIError(s3err.ErrBadRequest)
 			}
 		}
