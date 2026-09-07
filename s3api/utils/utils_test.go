@@ -317,6 +317,34 @@ func TestIsValidBucketName(t *testing.T) {
 			want: false,
 		},
 		{
+			name: "IsValidBucketName-adjacent-periods",
+			args: args{
+				bucket: "my..bucket",
+			},
+			want: false,
+		},
+		{
+			name: "IsValidBucketName-period-hyphen",
+			args: args{
+				bucket: "my.-bucket",
+			},
+			want: false,
+		},
+		{
+			name: "IsValidBucketName-hyphen-period",
+			args: args{
+				bucket: "my-.bucket",
+			},
+			want: false,
+		},
+		{
+			name: "IsValidBucketName-xn--prefix",
+			args: args{
+				bucket: "xn--bucket",
+			},
+			want: false,
+		},
+		{
 			name: "IsValidBucketName-valid-bucket-name",
 			args: args{
 				bucket: "my-bucket",
@@ -328,6 +356,28 @@ func TestIsValidBucketName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := IsValidBucketName(tt.args.bucket); got != tt.want {
 				t.Errorf("IsValidBucketName() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsReservedBucketName(t *testing.T) {
+	tests := []struct {
+		name   string
+		bucket string
+		want   bool
+	}{
+		{"sthree-prefix", "sthree-mybucket", true},
+		{"sthree-configurator", "sthree-configurator-x", true},
+		{"s3alias-suffix", "mybucket-s3alias", true},
+		{"ol-s3-suffix", "mybucket--ol-s3", true},
+		{"ordinary-name", "my-bucket", false},
+		{"contains-not-prefix-suffix", "my-sthree-bucket", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsReservedBucketName(tt.bucket); got != tt.want {
+				t.Errorf("IsReservedBucketName(%q) = %v, want %v", tt.bucket, got, tt.want)
 			}
 		})
 	}

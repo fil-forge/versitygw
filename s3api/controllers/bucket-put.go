@@ -601,6 +601,16 @@ func (c S3ApiController) CreateBucket(ctx fiber.Ctx) (*Response, error) {
 		}, s3err.GetBucketErr(s3err.ErrInvalidBucketName, bucket)
 	}
 
+	// a well-formed name reserved by AWS (sthree- prefix, -s3alias / --ol-s3
+	// suffix) is rejected with AccessDenied rather than InvalidBucketName
+	if utils.IsReservedBucketName(bucket) {
+		return &Response{
+			MetaOpts: &MetaOptions{
+				BucketOwner: bucketOwner.Access,
+			},
+		}, s3err.GetAPIError(s3err.ErrAccessDenied)
+	}
+
 	// both bucket canned ACL and acl grants is not allowed
 	if acl != "" && grants != "" {
 		debuglogger.Logf("invalid request: %q (grants) %q (acl)", grants, acl)
