@@ -102,14 +102,19 @@ func ParsePreconditionDateHeader(date string) *time.Time {
 	if date == "" {
 		return nil
 	}
-	// A future date is not ignored: S3 evaluates If-Modified-Since /
-	// If-Unmodified-Since against the object's last-modified time regardless
-	// (a future If-Modified-Since on an unmodified object yields 304). The
-	// comparison is EvaluatePreconditions' job, not the parser's.
+	// A date in the future is ignored: S3 does not evaluate a future
+	// If-Modified-Since / If-Unmodified-Since (verified against AWS S3 — a
+	// future If-Modified-Since on an unmodified object returns 200, not 304).
 	if parsed, err := time.Parse(time.RFC1123, date); err == nil {
+		if parsed.After(time.Now()) {
+			return nil
+		}
 		return &parsed
 	}
 	if parsed, err := time.Parse(time.RFC3339, date); err == nil {
+		if parsed.After(time.Now()) {
+			return nil
+		}
 		return &parsed
 	}
 	return nil
