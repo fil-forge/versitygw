@@ -30,15 +30,10 @@ func TestParsePreconditionDateHeader(t *testing.T) {
 		t.Error("RFC3339 date parsed to nil, want a time")
 	}
 
-	// A future date must be honored, not dropped: S3 evaluates
-	// If-Modified-Since against the object's last-modified time regardless of
-	// whether the date is in the future (a future If-Modified-Since on an
-	// unmodified object yields 304). See AWS S3 GetObject API reference.
-	future := ParsePreconditionDateHeader("Fri, 29 Oct 2100 19:43:31 GMT")
-	if future == nil {
-		t.Fatal("future RFC1123 date parsed to nil, want a time (future dates must not be ignored)")
-	}
-	if future.Year() != 2100 {
-		t.Errorf("future date year = %d, want 2100", future.Year())
+	// A future date is dropped (returns nil): S3 does not evaluate a future
+	// If-Modified-Since / If-Unmodified-Since — verified against AWS S3, where a
+	// future If-Modified-Since on an unmodified object returns 200, not 304.
+	if got := ParsePreconditionDateHeader("Fri, 29 Oct 2100 19:43:31 GMT"); got != nil {
+		t.Errorf("future date = %v, want nil (future dates are ignored)", got)
 	}
 }
