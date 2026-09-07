@@ -35,15 +35,3 @@ func IsObjectNameValidWithTraversal(name string, checkTraversal bool) bool {
 
 	return isObjectLocal(name)
 }
-
-// ContainsC1ControlChar reports whether s contains a C1 control character
-// (U+0080–U+009F). S3 rejects object keys containing these with InvalidURI; C0
-// controls (CR, LF, ESC, ...) are accepted and round-trip.
-func ContainsC1ControlChar(s string) bool {
-	for _, r := range s {
-		if r >= 0x80 && r <= 0x9f {
-			return true
-		}
-	}
-	return false
-}
