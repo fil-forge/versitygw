@@ -60,6 +60,7 @@ const (
 	InvalidArgDateHeader
 	InvalidArgIndexDocumentSuffix
 	InvalidArgErrorDocumentKey
+	InvalidArgContinuationToken
 )
 
 var invalidArgErrResponses = map[InvalidArgErrorCode]InvalidArgumentError{
@@ -206,6 +207,10 @@ var invalidArgErrResponses = map[InvalidArgErrorCode]InvalidArgumentError{
 	InvalidArgErrorDocumentKey: {
 		Description:  "The ErrorDocument Key is not well formed",
 		ArgumentName: "ErrorDocument",
+	},
+	InvalidArgContinuationToken: {
+		Description:  "The continuation token provided is incorrect",
+		ArgumentName: "continuation-token",
 	},
 }
 

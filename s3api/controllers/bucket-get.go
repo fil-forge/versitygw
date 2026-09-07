@@ -21,6 +21,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/s3api/utils"
+	"github.com/fil-forge/versitygw/s3err"
 	"github.com/fil-forge/versitygw/s3response"
 	"github.com/gofiber/fiber/v3"
 )
@@ -593,6 +594,17 @@ func (c S3ApiController) ListObjectsV2(ctx fiber.Ctx) (*Response, error) {
 				BucketOwner: parsedAcl.Owner,
 			},
 		}, err
+	}
+
+	// A present-but-empty continuation-token is invalid, not absent: AWS rejects
+	// it with InvalidArgument. ctx.Query collapses "absent" and "present, empty",
+	// so check the raw query args for the key's presence.
+	if cToken == "" && ctx.Request().URI().QueryArgs().Has("continuation-token") {
+		return &Response{
+			MetaOpts: &MetaOptions{
+				BucketOwner: parsedAcl.Owner,
+			},
+		}, s3err.GetInvalidArgumentErr(s3err.InvalidArgContinuationToken, "")
 	}
 
 	res, err := c.be.ListObjectsV2(ctx.RequestCtx(),
