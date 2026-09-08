@@ -299,6 +299,17 @@ func (c S3ApiController) CompleteMultipartUpload(ctx fiber.Ctx) (*Response, erro
 		}, err
 	}
 
+	// An empty request body is rejected as InvalidRequest (AWS), distinct from
+	// the MalformedXML returned for a present-but-unparseable body.
+	if len(ctx.BodyRaw()) == 0 {
+		debuglogger.Logf("empty body provided for complete multipart upload")
+		return &Response{
+			MetaOpts: &MetaOptions{
+				BucketOwner: parsedAcl.Owner,
+			},
+		}, s3err.GetAPIError(s3err.ErrInvalidRequest)
+	}
+
 	var body s3response.CompleteMultipartUploadRequestBody
 	err = xml.Unmarshal(ctx.BodyRaw(), &body)
 	if err != nil {

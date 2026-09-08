@@ -138,7 +138,12 @@ func ParseAuthorization(authorization string) (AuthData, error) {
 
 	algo := authParts[0]
 	if algo == "AWS" {
-		// SigV2 authorization is not supported by the gateway
+		// SigV2 header form is "AWS <AccessKeyId>:<Signature>". A malformed value
+		// (missing the ":") is rejected as InvalidArgument, matching AWS; a
+		// well-formed SigV2 header is unsupported by the gateway.
+		if !strings.Contains(authParts[1], ":") {
+			return a, s3err.GetInvalidArgumentErr(s3err.InvalidArgAuthHeader, authorization)
+		}
 		return a, s3err.GetAPIError(s3err.ErrUnsupportedAuthorizationMechanism)
 	}
 	if algo != "AWS4-HMAC-SHA256" {

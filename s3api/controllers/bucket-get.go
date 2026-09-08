@@ -15,6 +15,7 @@
 package controllers
 
 import (
+	"net/url"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -550,6 +551,21 @@ func (c S3ApiController) ListMultipartUploads(ctx fiber.Ctx) (*Response, error) 
 	}, err
 }
 
+// urlEncodeListKey applies EncodingType=url encoding to a list-response key or
+// prefix: form-style escaping (space -> "+", "+" -> "%2B", ...) with "/" left
+// intact, matching AWS.
+func urlEncodeListKey(s string) string {
+	return strings.ReplaceAll(url.QueryEscape(s), "%2F", "/")
+}
+
+func encStrPtr(p *string) *string {
+	if p == nil {
+		return nil
+	}
+	v := urlEncodeListKey(*p)
+	return &v
+}
+
 func (c S3ApiController) ListObjectsV2(ctx fiber.Ctx) (*Response, error) {
 	// url values
 	bucket := ctx.Params("bucket")
@@ -625,6 +641,19 @@ func (c S3ApiController) ListObjectsV2(ctx fiber.Ctx) (*Response, error) {
 		}, err
 	}
 
+	if strings.EqualFold(ctx.Query("encoding-type"), "url") {
+		res.EncodingType = types.EncodingTypeUrl
+		res.Prefix = encStrPtr(res.Prefix)
+		res.Delimiter = encStrPtr(res.Delimiter)
+		res.StartAfter = encStrPtr(res.StartAfter)
+		for i := range res.Contents {
+			res.Contents[i].Key = encStrPtr(res.Contents[i].Key)
+		}
+		for i := range res.CommonPrefixes {
+			res.CommonPrefixes[i].Prefix = encStrPtr(res.CommonPrefixes[i].Prefix)
+		}
+	}
+
 	return &Response{
 		Headers: map[string]*string{
 			"x-amz-bucket-region": &region,
@@ -695,6 +724,20 @@ func (c S3ApiController) ListObjects(ctx fiber.Ctx) (*Response, error) {
 				BucketOwner: parsedAcl.Owner,
 			},
 		}, err
+	}
+
+	if strings.EqualFold(ctx.Query("encoding-type"), "url") {
+		res.EncodingType = types.EncodingTypeUrl
+		res.Prefix = encStrPtr(res.Prefix)
+		res.Delimiter = encStrPtr(res.Delimiter)
+		res.Marker = encStrPtr(res.Marker)
+		res.NextMarker = encStrPtr(res.NextMarker)
+		for i := range res.Contents {
+			res.Contents[i].Key = encStrPtr(res.Contents[i].Key)
+		}
+		for i := range res.CommonPrefixes {
+			res.CommonPrefixes[i].Prefix = encStrPtr(res.CommonPrefixes[i].Prefix)
+		}
 	}
 
 	return &Response{
