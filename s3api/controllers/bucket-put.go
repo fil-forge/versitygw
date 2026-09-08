@@ -718,6 +718,14 @@ func (c S3ApiController) CreateBucket(ctx fiber.Ctx) (*Response, error) {
 		Bucket:                     &bucket,
 		ObjectOwnership:            objectOwnership,
 		ObjectLockEnabledForBucket: &lockEnabled,
+		// Forward the requested ACL so backends that do not model ACLs can
+		// reject a non-default request; backends that store ACLs use updAcl.
+		ACL:              acl,
+		GrantFullControl: &grantFullControl,
+		GrantRead:        &grantRead,
+		GrantReadACP:     &grantReadACP,
+		GrantWrite:       &grantWrite,
+		GrantWriteACP:    &grantWriteACP,
 		CreateBucketConfiguration: &types.CreateBucketConfiguration{
 			Tags: body.TagSet,
 		},
