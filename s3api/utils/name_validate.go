@@ -24,13 +24,19 @@ func IsObjectNameValid(name string) bool {
 // than filesystem paths pass false, since a key like "../file.txt" is a legal
 // literal S3 key for them and carries no traversal risk.
 func IsObjectNameValidWithTraversal(name string, checkTraversal bool) bool {
-	switch clean(name) {
-	case "", ".", "..", "/":
+	if name == "" {
 		return false
 	}
 
+	// Opaque backends store keys as literal strings, so any non-empty key is
+	// valid — AWS accepts "/", "//", ".", ".." and the like as object keys.
 	if !checkTraversal {
 		return true
+	}
+
+	switch clean(name) {
+	case "", ".", "..", "/":
+		return false
 	}
 
 	return isObjectLocal(name)
