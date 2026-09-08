@@ -136,13 +136,16 @@ type GetObjectAttributesResponse struct {
 
 type ObjectParts struct {
 	// PartsCount is the object's total multipart part count (AWS <PartsCount>,
-	// the SDK's TotalPartsCount). Emitted for every completed multipart object;
-	// the per-part list below is populated only when parts carry checksums.
+	// the SDK's TotalPartsCount). Emitted for every completed multipart object.
+	// The pagination fields and per-part list below are populated only when the
+	// parts carry checksums; they are pointers so a checksummed object emits the
+	// zero values (PartNumberMarker 0, IsTruncated false) while a non-checksummed
+	// object omits them entirely, matching AWS in both cases.
 	PartsCount           int                `xml:"PartsCount,omitempty"`
-	PartNumberMarker     int                `xml:",omitempty"`
-	NextPartNumberMarker int                `xml:",omitempty"`
-	MaxParts             int                `xml:",omitempty"`
-	IsTruncated          bool               `xml:",omitempty"`
+	PartNumberMarker     *int               `xml:"PartNumberMarker,omitempty"`
+	NextPartNumberMarker *int               `xml:"NextPartNumberMarker,omitempty"`
+	MaxParts             *int               `xml:"MaxParts,omitempty"`
+	IsTruncated          *bool              `xml:"IsTruncated,omitempty"`
 	Parts                []types.ObjectPart `xml:"Part"`
 }
 
