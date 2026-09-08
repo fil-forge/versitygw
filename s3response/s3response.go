@@ -600,6 +600,7 @@ type PutObjectInput struct {
 	ChecksumXXHASH128       *string
 	ContentMD5              *string
 	ExpectedBucketOwner     *string
+	ACL                     types.ObjectCannedACL
 	GrantFullControl        *string
 	GrantRead               *string
 	GrantReadACP            *string

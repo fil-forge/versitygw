@@ -231,10 +231,23 @@ func (c S3ApiController) CreateMultipartUpload(ctx fiber.Ctx) (*Response, error)
 		}, err
 	}
 
+	acl := types.ObjectCannedACL(c.getAclHeaderValue(ctx, "X-Amz-Acl"))
+	grantFullControl := c.getAclHeaderValue(ctx, "X-Amz-Grant-Full-Control")
+	grantRead := c.getAclHeaderValue(ctx, "X-Amz-Grant-Read")
+	grantReadACP := c.getAclHeaderValue(ctx, "X-Amz-Grant-Read-Acp")
+	grantWriteACP := c.getAclHeaderValue(ctx, "X-Amz-Grant-Write-Acp")
+
 	res, err := c.be.CreateMultipartUpload(ctx.RequestCtx(),
 		s3response.CreateMultipartUploadInput{
-			Bucket:                    &bucket,
-			Key:                       &key,
+			Bucket: &bucket,
+			Key:    &key,
+			// Forward the requested ACL so backends that do not model ACLs can
+			// reject a request that sets one; backends that store ACLs use it.
+			ACL:                       acl,
+			GrantFullControl:          utils.GetStringPtr(grantFullControl),
+			GrantRead:                 utils.GetStringPtr(grantRead),
+			GrantReadACP:              utils.GetStringPtr(grantReadACP),
+			GrantWriteACP:             utils.GetStringPtr(grantWriteACP),
 			Tagging:                   &tagging,
 			ContentType:               &contentType,
 			ContentEncoding:           &contentEncoding,
