@@ -23,10 +23,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/logger"
-	"github.com/gofiber/fiber/v3/middleware/recover"
-	"github.com/valyala/fasthttp"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/debuglogger"
@@ -38,6 +34,10 @@ import (
 	"github.com/fil-forge/versitygw/s3event"
 	"github.com/fil-forge/versitygw/s3log"
 	"github.com/fil-forge/versitygw/webui"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/logger"
+	"github.com/gofiber/fiber/v3/middleware/recover"
+	"github.com/valyala/fasthttp"
 )
 
 const (

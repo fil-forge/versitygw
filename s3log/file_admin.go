@@ -20,9 +20,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/s3api/utils"
+	"github.com/gofiber/fiber/v3"
 )
 
 // FileLogger is a local file audit log

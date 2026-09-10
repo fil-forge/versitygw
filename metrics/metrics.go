@@ -23,8 +23,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/s3err"
+	"github.com/gofiber/fiber/v3"
 )
 
 var (

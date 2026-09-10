@@ -15,10 +15,10 @@
 package middlewares
 
 import (
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/fil-forge/versitygw/s3err"
+	"github.com/gofiber/fiber/v3"
 )
 
 // IsAdmin is a middleware that restricts access to admin APIs, allowing only admin users

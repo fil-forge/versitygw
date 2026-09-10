@@ -17,9 +17,9 @@ package backend
 import (
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/fil-forge/versitygw/s3err"
 	"github.com/fil-forge/versitygw/s3response"
+	"github.com/google/uuid"
 )
 
 // ListMultipartUploads initializes a multipart upload lister and calls Run()

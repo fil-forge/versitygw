@@ -34,9 +34,9 @@ import (
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
-	"github.com/urfave/cli/v2"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/s3response"
+	"github.com/urfave/cli/v2"
 )
 
 var (

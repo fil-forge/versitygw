@@ -26,11 +26,11 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/oklog/ulid/v2"
-	"github.com/stretchr/testify/assert"
 	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/fil-forge/versitygw/s3err"
 	"github.com/fil-forge/versitygw/s3response"
+	"github.com/oklog/ulid/v2"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestS3ApiController_GetObjectTagging(t *testing.T) {

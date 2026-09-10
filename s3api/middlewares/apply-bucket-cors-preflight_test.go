@@ -19,9 +19,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/s3err"
+	"github.com/gofiber/fiber/v3"
 )
 
 type backendWithGetBucketCors struct {

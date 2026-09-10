@@ -18,8 +18,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/fil-forge/versitygw/s3err"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCORSOrigin_Validate(t *testing.T) {

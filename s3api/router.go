@@ -17,7 +17,6 @@ package s3api
 import (
 	"net/http"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/metrics"
@@ -26,6 +25,7 @@ import (
 	"github.com/fil-forge/versitygw/s3err"
 	"github.com/fil-forge/versitygw/s3event"
 	"github.com/fil-forge/versitygw/s3log"
+	"github.com/gofiber/fiber/v3"
 )
 
 type S3ApiRouter struct {

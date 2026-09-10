@@ -22,7 +22,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/debuglogger"
 	"github.com/fil-forge/versitygw/s3api/middlewares"
@@ -30,6 +29,7 @@ import (
 	"github.com/fil-forge/versitygw/s3err"
 	"github.com/fil-forge/versitygw/s3event"
 	"github.com/fil-forge/versitygw/s3response"
+	"github.com/gofiber/fiber/v3"
 )
 
 func (c S3ApiController) DeleteObjects(ctx fiber.Ctx) (*Response, error) {

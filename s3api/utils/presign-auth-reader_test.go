@@ -18,8 +18,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/fil-forge/versitygw/s3err"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_validateExpiration(t *testing.T) {

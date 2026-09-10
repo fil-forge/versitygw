@@ -15,10 +15,10 @@
 package controllers
 
 import (
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/fil-forge/versitygw/s3response"
+	"github.com/gofiber/fiber/v3"
 )
 
 func (c S3ApiController) ListBuckets(ctx fiber.Ctx) (*Response, error) {

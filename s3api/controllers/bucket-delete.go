@@ -17,9 +17,9 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/s3api/utils"
+	"github.com/gofiber/fiber/v3"
 )
 
 func (c S3ApiController) DeleteBucketTagging(ctx fiber.Ctx) (*Response, error) {

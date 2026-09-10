@@ -32,12 +32,12 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/gofiber/fiber/v3"
-	"github.com/valyala/fasthttp"
 	signerV4 "github.com/fil-forge/versitygw/aws/signer/v4"
 	"github.com/fil-forge/versitygw/debuglogger"
 	"github.com/fil-forge/versitygw/s3err"
 	"github.com/fil-forge/versitygw/s3response"
+	"github.com/gofiber/fiber/v3"
+	"github.com/valyala/fasthttp"
 )
 
 var (
