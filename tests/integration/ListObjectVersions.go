@@ -336,9 +336,11 @@ func ListObjectVersions_containing_null_versionId_obj(s *S3Conf) error {
 			return err
 		}
 
-		if getString(out.res.VersionId) != nullVersionId {
-			return fmt.Errorf("expected the uploaded object versionId to be %v, instead got %v",
-				nullVersionId, getString(out.res.VersionId))
+		// A suspended bucket stores the object as the "null" version but the
+		// PutObject response carries no x-amz-version-id header.
+		if out.res.VersionId != nil {
+			return fmt.Errorf("expected no versionId in the suspended bucket PutObject response, instead got %v",
+				*out.res.VersionId)
 		}
 
 		versions[0].IsLatest = getBoolPtr(false)
