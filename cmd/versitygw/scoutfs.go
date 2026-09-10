@@ -144,6 +144,7 @@ func runScoutfs(ctx *cli.Context) error {
 	opts.DefaultEtag = defaultEtag
 
 	be, err := scoutfs.New(ctx.Args().Get(0), opts)
+	//lint:ignore SA4023 Only true when !(linux && amd64)
 	if err != nil {
 		return fmt.Errorf("init scoutfs: %v", err)
 	}
