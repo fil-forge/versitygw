@@ -19,8 +19,8 @@ import (
 	"io/fs"
 	"math"
 
+	"github.com/fil-forge/versitygw/backend/scoutfs"
 	"github.com/urfave/cli/v2"
-	"github.com/versity/versitygw/backend/scoutfs"
 )
 
 var (

@@ -15,8 +15,8 @@
 package middlewares
 
 import (
+	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/gofiber/fiber/v3"
-	"github.com/versity/versitygw/s3api/utils"
 )
 
 // RequestIDs sets requestID and hostID in context locals

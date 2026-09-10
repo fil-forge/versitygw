@@ -234,7 +234,7 @@ source ./tests/setup.sh
 }
 
 @test "REST - RestoreObject" {
-  skip "https://github.com/versity/versitygw/issues/1805"
+  skip "https://github.com/fil-forge/versitygw/issues/1805"
 
   run get_file_name
   assert_success

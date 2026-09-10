@@ -22,8 +22,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/fil-forge/versitygw/s3err"
 	"github.com/pkg/xattr"
-	"github.com/versity/versitygw/s3err"
 )
 
 var (

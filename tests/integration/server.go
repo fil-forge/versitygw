@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 func Server_large_http_header(s *S3Conf) error {

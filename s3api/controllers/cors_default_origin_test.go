@@ -19,9 +19,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/fil-forge/versitygw/s3api/middlewares"
+	"github.com/fil-forge/versitygw/s3err"
 	"github.com/gofiber/fiber/v3"
-	"github.com/versity/versitygw/s3api/middlewares"
-	"github.com/versity/versitygw/s3err"
 )
 
 func TestApplyBucketCORS_FallbackOrigin_NoBucketCors_NoRequestOrigin(t *testing.T) {

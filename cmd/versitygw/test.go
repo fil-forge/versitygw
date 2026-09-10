@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/fil-forge/versitygw/tests/integration"
 	"github.com/urfave/cli/v2"
-	"github.com/versity/versitygw/tests/integration"
 )
 
 var (

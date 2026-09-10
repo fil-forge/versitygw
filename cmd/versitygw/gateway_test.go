@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/versity/versitygw/backend/meta"
-	"github.com/versity/versitygw/backend/posix"
-	"github.com/versity/versitygw/tests/integration"
+	"github.com/fil-forge/versitygw/backend/meta"
+	"github.com/fil-forge/versitygw/backend/posix"
+	"github.com/fil-forge/versitygw/tests/integration"
 )
 
 const (

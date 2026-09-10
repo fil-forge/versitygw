@@ -17,8 +17,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/fil-forge/versitygw/backend/azure"
 	"github.com/urfave/cli/v2"
-	"github.com/versity/versitygw/backend/azure"
 )
 
 var (

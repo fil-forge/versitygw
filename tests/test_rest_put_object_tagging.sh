@@ -42,7 +42,7 @@ test_file="test_file"
 # tags: curl, PutObjectTagging, tagging, invalid-query
 @test "REST - PutObjectTagging - invalid key returns invalid key in error" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1663"
+    skip "https://github.com/fil-forge/versitygw/issues/1663"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success

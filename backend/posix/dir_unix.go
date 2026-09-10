@@ -21,7 +21,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 func handleParentDirError(_ string) error {

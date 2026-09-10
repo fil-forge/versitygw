@@ -33,7 +33,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
-	"github.com/versity/versitygw/debuglogger"
+	"github.com/fil-forge/versitygw/debuglogger"
 )
 
 // IAMServiceS3 stores user accounts in an S3 object

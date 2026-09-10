@@ -21,9 +21,9 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/versity/versitygw/auth"
-	"github.com/versity/versitygw/s3api/utils"
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/auth"
+	"github.com/fil-forge/versitygw/s3api/utils"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 func TestS3ApiController_HeadObject(t *testing.T) {

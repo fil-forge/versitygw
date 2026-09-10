@@ -24,7 +24,7 @@ source ./tests/setup.sh
 # tags: curl,cors,GetBucketCors,minimal-request
 @test "REST - GetCors - correct content-type, and returns bucket name" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1842"
+    skip "https://github.com/fil-forge/versitygw/issues/1842"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -142,7 +142,7 @@ source ./tests/setup.sh
 # tags: curl,cors,PutBucketCors,GetBucketCors,content-md5,origin,access-control-expose-headers
 @test "REST - CORS - origin - ETag not returned in exposed headers" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1893"
+    skip "https://github.com/fil-forge/versitygw/issues/1893"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -261,7 +261,7 @@ source ./tests/setup.sh
 # tags: curl,cors,PutBucketCors,GetBucketCors,content-md5,origin,access-control-request-method,access-control-request-headers,access-control-allow-origin,access-control-allow-methods,access-control-allow-headers,access-control-expose-headers,access-control-max-age
 @test "REST - CORS - all fields" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1893"
+    skip "https://github.com/fil-forge/versitygw/issues/1893"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success

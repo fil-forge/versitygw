@@ -22,10 +22,10 @@ import (
 	_ "net/http/pprof"
 	"os"
 
+	"github.com/fil-forge/versitygw/backend"
+	"github.com/fil-forge/versitygw/embedgw"
+	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/urfave/cli/v2"
-	"github.com/versity/versitygw/backend"
-	"github.com/versity/versitygw/embedgw"
-	"github.com/versity/versitygw/s3api/utils"
 )
 
 var (

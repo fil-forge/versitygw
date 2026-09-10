@@ -140,7 +140,7 @@ export RUN_USERS=true
 # tags: curl,minimal-request,GetBucketPolicy
 @test "REST - get policy w/o policy" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/959"
+    skip "https://github.com/fil-forge/versitygw/issues/959"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -182,7 +182,7 @@ export RUN_USERS=true
 # tags: curl,malformed-message,invalid-method
 @test "REST - POST call on root endpoint" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1487"
+    skip "https://github.com/fil-forge/versitygw/issues/1487"
   fi
   run delete_object_empty_bucket_check_error
   assert_success
