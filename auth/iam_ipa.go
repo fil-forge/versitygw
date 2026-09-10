@@ -168,6 +168,7 @@ func (ipa *IpaIAMService) GetUserAccount(access string) (Account, error) {
 		return account, fmt.Errorf("ipa cannot generate session key: %w", err)
 	}
 
+	//lint:ignore SA1019 Ignore usage of deprecated rsa.EncryptPKCS1v15 for compatibility with IPA vault
 	encryptedKey, err := rsa.EncryptPKCS1v15(rand.Reader, ipa.kraTransportKey, session_key)
 	if err != nil {
 		return account, fmt.Errorf("ipa vault secret retrieval: %w", err)
