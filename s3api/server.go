@@ -116,6 +116,7 @@ func New(
 		ReadBufferSize: requestHeaderMaxSize,
 	})
 	installRequestHeaderLimitErrorHandler(app)
+	app.Server().ExpectHandler = expectHandler
 
 	server.app = app
 	server.Router.app = app
@@ -453,6 +454,28 @@ func installRequestHeaderLimitErrorHandler(app *fiber.App) {
 
 // globalErrorHandler catches the errors before reaching to
 // the handlers and any system panics
+// expectHandler answers a request's "Expect: 100-continue" before fasthttp
+// tells the client to send the body. A declared Content-Length over the
+// PutObject/UploadPart cap is rejected here with EntityTooLarge, as S3 does,
+// so the client never starts the upload. Without this the middleware still
+// rejects on the same header, but only after fasthttp has sent 100 Continue
+// and the client has begun streaming: the server then closes a connection
+// the client is still writing to, and whether the client reads the 400 or
+// hits the reset first is a race. Everything else proceeds to the handlers.
+func expectHandler(ctx *fasthttp.RequestCtx) int {
+	n := ctx.Request.Header.ContentLength()
+	if n <= utils.MaxObjSizeLimit {
+		return fasthttp.StatusContinue
+	}
+	requestID, hostID := utils.NewS3RequestID(), utils.NewS3HostID()
+	ctx.Response.Header.Set(utils.HeaderAmzRequestID, requestID)
+	ctx.Response.Header.Set(utils.HeaderAmzID2, hostID)
+	ctx.Response.Header.SetContentType(fiber.MIMEApplicationXML)
+	err := s3err.GetEntityTooLargeErr(int64(n), utils.MaxObjSizeLimit)
+	ctx.Response.SetBody(err.XMLBody(requestID, hostID))
+	return err.StatusCode()
+}
+
 func globalErrorHandler(ctx fiber.Ctx, er error) error {
 	requestID, hostID := utils.EnsureRequestIDs(ctx)
 

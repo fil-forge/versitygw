@@ -15,10 +15,14 @@
 package s3api
 
 import (
+	"context"
+	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -27,6 +31,7 @@ import (
 	"github.com/fil-forge/versitygw/s3api/middlewares"
 	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/gofiber/fiber/v3"
+	"github.com/valyala/fasthttp/fasthttputil"
 )
 
 func newTestS3ApiServer(opts ...Option) (*S3ApiServer, error) {
@@ -239,5 +244,74 @@ func TestCustomMountValidation(t *testing.T) {
 				t.Fatalf("New() error = %v, want substring %q", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+// countingReader counts the bytes a client actually sends as a request body.
+type countingReader struct {
+	n atomic.Int64
+}
+
+func (r *countingReader) Read(p []byte) (int, error) {
+	r.n.Add(int64(len(p)))
+	return len(p), nil
+}
+
+// TestExpectContinue_RejectsOverCapBeforeBody: an upload declaring more than
+// the 5 GiB cap with "Expect: 100-continue" is answered EntityTooLarge before
+// the client sends a single body byte; one within the cap gets its 100
+// Continue and reaches the handlers. Runs the real fasthttp server over an
+// in-memory listener, since the Expect exchange happens below fiber.
+func TestExpectContinue_RejectsOverCapBeforeBody(t *testing.T) {
+	server, err := newTestS3ApiServer()
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	ln := fasthttputil.NewInmemoryListener()
+	go func() { _ = server.app.Server().Serve(ln) }()
+	t.Cleanup(func() { _ = ln.Close() })
+
+	client := &http.Client{Transport: &http.Transport{
+		DialContext:           func(context.Context, string, string) (net.Conn, error) { return ln.Dial() },
+		ExpectContinueTimeout: 5 * time.Second,
+	}}
+	send := func(size int64) (*http.Response, *countingReader) {
+		body := &countingReader{}
+		req, err := http.NewRequest(http.MethodPut, "http://vgw/bucket/key", io.LimitReader(body, size))
+		if err != nil {
+			t.Fatalf("NewRequest: %v", err)
+		}
+		req.ContentLength = size
+		req.Header.Set("Expect", "100-continue")
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("PUT of %d bytes: %v", size, err)
+		}
+		return resp, body
+	}
+
+	resp, body := send(utils.MaxObjSizeLimit + 1)
+	xmlBody, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("over-cap status = %d, want 400", resp.StatusCode)
+	}
+	if !strings.Contains(string(xmlBody), "<Code>EntityTooLarge</Code>") {
+		t.Fatalf("over-cap body = %q, want an EntityTooLarge error document", xmlBody)
+	}
+	if resp.Header.Get(utils.HeaderAmzRequestID) == "" {
+		t.Fatalf("over-cap response lacks %s", utils.HeaderAmzRequestID)
+	}
+	if got := body.n.Load(); got != 0 {
+		t.Fatalf("client sent %d body bytes before the rejection, want 0", got)
+	}
+
+	// Within the cap the Expect handler steps aside: the request reaches the
+	// S3 handlers, which reject the unsigned request as they would any other.
+	resp, _ = send(1024)
+	within, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	if strings.Contains(string(within), "EntityTooLarge") || resp.StatusCode == http.StatusExpectationFailed {
+		t.Fatalf("within-cap request was refused at the Expect stage: status %d body %q", resp.StatusCode, within)
 	}
 }
