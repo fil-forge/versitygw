@@ -24,10 +24,10 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/smithy-go/logging"
-	"github.com/gofiber/fiber/v3"
 	v4 "github.com/fil-forge/versitygw/aws/signer/v4"
 	"github.com/fil-forge/versitygw/debuglogger"
 	"github.com/fil-forge/versitygw/s3err"
+	"github.com/gofiber/fiber/v3"
 )
 
 const (

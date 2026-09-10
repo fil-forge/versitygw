@@ -21,10 +21,10 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/s3err"
+	"github.com/gofiber/fiber/v3"
 )
 
 type backendWithCorsOnly struct {

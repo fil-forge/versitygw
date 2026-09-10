@@ -20,10 +20,10 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/oklog/ulid/v2"
 	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/fil-forge/versitygw/s3err"
 	"github.com/fil-forge/versitygw/s3event"
+	"github.com/oklog/ulid/v2"
 )
 
 func TestS3ApiController_DeleteObjectTagging(t *testing.T) {

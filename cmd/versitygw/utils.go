@@ -22,9 +22,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/urfave/cli/v2"
 	"github.com/fil-forge/versitygw/backend/meta"
 	"github.com/fil-forge/versitygw/s3event"
+	"github.com/urfave/cli/v2"
 )
 
 func utilsCommand() *cli.Command {

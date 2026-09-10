@@ -22,11 +22,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/s3api/middlewares"
 	"github.com/fil-forge/versitygw/s3api/utils"
+	"github.com/gofiber/fiber/v3"
 )
 
 func newTestS3ApiServer(opts ...Option) (*S3ApiServer, error) {

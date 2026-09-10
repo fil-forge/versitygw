@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/google/go-cmp/cmp"
 	v4Internal "github.com/fil-forge/versitygw/aws/signer/internal/v4"
+	"github.com/google/go-cmp/cmp"
 )
 
 var testCredentials = aws.Credentials{AccessKeyID: "AKID", SecretAccessKey: "SECRET", SessionToken: "SESSION"}

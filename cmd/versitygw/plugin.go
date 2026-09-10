@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"plugin"
 
-	"github.com/urfave/cli/v2"
 	"github.com/fil-forge/versitygw/plugins"
+	"github.com/urfave/cli/v2"
 )
 
 func pluginCommand() *cli.Command {

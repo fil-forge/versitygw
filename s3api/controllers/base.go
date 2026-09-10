@@ -21,7 +21,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/debuglogger"
@@ -30,6 +29,7 @@ import (
 	"github.com/fil-forge/versitygw/s3err"
 	"github.com/fil-forge/versitygw/s3event"
 	"github.com/fil-forge/versitygw/s3log"
+	"github.com/gofiber/fiber/v3"
 )
 
 type S3ApiController struct {

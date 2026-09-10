@@ -20,9 +20,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/fil-forge/versitygw/s3err"
+	"github.com/gofiber/fiber/v3"
 )
 
 // VerifyChecksums parses, validates, and calculates the

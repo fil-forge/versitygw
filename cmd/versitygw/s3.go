@@ -17,8 +17,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/urfave/cli/v2"
 	"github.com/fil-forge/versitygw/backend/s3proxy"
+	"github.com/urfave/cli/v2"
 )
 
 var (

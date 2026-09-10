@@ -18,8 +18,8 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/s3api/utils"
+	"github.com/gofiber/fiber/v3"
 )
 
 // ChecksumReader extends io.Reader with checksum-related metadata.

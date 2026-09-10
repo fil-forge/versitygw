@@ -17,9 +17,9 @@ package middlewares
 import (
 	"strings"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/s3err"
+	"github.com/gofiber/fiber/v3"
 )
 
 // ApplyBucketCORSPreflightFallback handles CORS preflight (OPTIONS) requests for S3 routes

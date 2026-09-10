@@ -18,11 +18,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/debuglogger"
 	"github.com/fil-forge/versitygw/s3err"
+	"github.com/gofiber/fiber/v3"
 )
 
 // Vary http response header is always the same below

@@ -19,13 +19,13 @@ import (
 	"net"
 	"os"
 
-	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/logger"
-	"github.com/gofiber/fiber/v3/middleware/recover"
 	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/debuglogger"
 	"github.com/fil-forge/versitygw/s3api/middlewares"
 	"github.com/fil-forge/versitygw/s3api/utils"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/logger"
+	"github.com/gofiber/fiber/v3/middleware/recover"
 )
 
 // Server is the static website hosting endpoint.

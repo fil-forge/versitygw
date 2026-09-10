@@ -26,10 +26,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
-	"github.com/stretchr/testify/assert"
 	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/fil-forge/versitygw/s3err"
+	"github.com/gofiber/fiber/v3"
+	"github.com/stretchr/testify/assert"
 )
 
 // chainHandlers mimics controllers.ProcessHandlers: it calls each handler in

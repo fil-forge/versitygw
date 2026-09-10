@@ -28,12 +28,12 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/gofiber/fiber/v3"
-	"github.com/stretchr/testify/assert"
-	"github.com/valyala/fasthttp"
 	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/s3err"
 	"github.com/fil-forge/versitygw/s3response"
+	"github.com/gofiber/fiber/v3"
+	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
 
 func TestCreateHttpRequestFromCtx(t *testing.T) {

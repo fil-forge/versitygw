@@ -30,8 +30,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/pkg/xattr"
-	"github.com/versity/scoutfs-go"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/backend/meta"
@@ -39,6 +37,8 @@ import (
 	"github.com/fil-forge/versitygw/debuglogger"
 	"github.com/fil-forge/versitygw/s3err"
 	"github.com/fil-forge/versitygw/s3response"
+	"github.com/pkg/xattr"
+	"github.com/versity/scoutfs-go"
 )
 
 type ScoutFS struct {

@@ -26,10 +26,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/fil-forge/versitygw/s3err"
+	"github.com/gofiber/fiber/v3"
 )
 
 // WebhookLogger is a webhook URL audit log

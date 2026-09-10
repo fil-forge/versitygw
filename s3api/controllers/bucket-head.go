@@ -18,10 +18,10 @@ import (
 	"errors"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/gofiber/fiber/v3"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/fil-forge/versitygw/s3err"
+	"github.com/gofiber/fiber/v3"
 )
 
 func (c S3ApiController) HeadBucket(ctx fiber.Ctx) (*Response, error) {
