@@ -32,9 +32,27 @@ const (
 	defaultRegion = "us-east-1"
 )
 
+// RootUserConfig is the gateway's built-in root account: an access key the
+// auth middlewares resolve directly, ahead of the IAM service, with the admin
+// role and every ACL / policy check skipped. A zero-value config disables the
+// root account, so every access key (an empty one included) resolves through
+// the IAM service.
 type RootUserConfig struct {
 	Access string
 	Secret string
+}
+
+// Enabled reports whether a root account is configured.
+func (r RootUserConfig) Enabled() bool {
+	return r.Access != ""
+}
+
+// matches reports whether access names the root account. It is false when
+// the root account is disabled: an empty access key must never match an
+// empty root key, since that would verify the signature against an empty
+// secret and grant root.
+func (r RootUserConfig) matches(access string) bool {
+	return r.Enabled() && access == r.Access
 }
 
 func VerifyV4Signature(root RootUserConfig, iam auth.IAMService, region string, streamBody, requireContentSha256, allowDefaultRegion bool) fiber.Handler {
@@ -95,7 +113,7 @@ func VerifyV4Signature(root RootUserConfig, iam auth.IAMService, region string, 
 			return s3err.MalformedAuth.IncorrectRegion(region, authData.Region)
 		}
 
-		utils.ContextKeyIsRoot.Set(ctx, authData.Access == root.Access)
+		utils.ContextKeyIsRoot.Set(ctx, root.matches(authData.Access))
 
 		account, err := acct.getAccount(ctx, authData.Access)
 		if err == auth.ErrNoSuchUser {
@@ -216,7 +234,7 @@ type RequestIAMService interface {
 }
 
 func (a accounts) getAccount(ctx fiber.Ctx, access string) (auth.Account, error) {
-	if access == a.root.Access {
+	if a.root.matches(access) {
 		return auth.Account{
 			Access: a.root.Access,
 			Secret: a.root.Secret,
