@@ -234,6 +234,13 @@ type RequestIAMService interface {
 }
 
 func (a accounts) getAccount(ctx fiber.Ctx, access string) (auth.Account, error) {
+	// An empty access key names no account. Reject it here, before any IAM
+	// lookup: the built-in IAM services compare the access key against the
+	// root account they were constructed with, and with root disabled that
+	// account is the zero value, which an empty key would otherwise match.
+	if access == "" {
+		return auth.Account{}, auth.ErrNoSuchUser
+	}
 	if a.root.matches(access) {
 		return auth.Account{
 			Access: a.root.Access,
