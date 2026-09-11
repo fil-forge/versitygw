@@ -35,6 +35,7 @@ const (
 	InvalidArgCopySourceEncoding
 	InvalidArgURLEncodedTagging
 	InvalidArgAuthHeader
+	InvalidArgSigV2AuthHeader
 	InvalidArgAuthorizationType
 	InvalidArgPOSTFileRequired
 	InvalidArgSHA256Payload
@@ -106,6 +107,10 @@ var invalidArgErrResponses = map[InvalidArgErrorCode]InvalidArgumentError{
 	},
 	InvalidArgAuthHeader: {
 		Description:  "Authorization header is invalid -- one and only one ' ' (space) required.",
+		ArgumentName: "Authorization",
+	},
+	InvalidArgSigV2AuthHeader: {
+		Description:  "AWS authorization header is invalid.  Expected AwsAccessKeyId:signature",
 		ArgumentName: "Authorization",
 	},
 	InvalidArgAuthorizationType: {
