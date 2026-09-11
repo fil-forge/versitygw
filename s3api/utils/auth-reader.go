@@ -142,7 +142,7 @@ func ParseAuthorization(authorization string) (AuthData, error) {
 		// (missing the ":") is rejected as InvalidArgument, matching AWS; a
 		// well-formed SigV2 header is unsupported by the gateway.
 		if !strings.Contains(authParts[1], ":") {
-			return a, s3err.GetInvalidArgumentErr(s3err.InvalidArgAuthHeader, authorization)
+			return a, s3err.GetInvalidArgumentErr(s3err.InvalidArgSigV2AuthHeader, authorization)
 		}
 		return a, s3err.GetAPIError(s3err.ErrUnsupportedAuthorizationMechanism)
 	}

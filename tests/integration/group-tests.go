@@ -40,6 +40,7 @@ func TestAuthentication(ts *TestState) {
 	ts.Run(Authentication_unsigned_non_required_header)
 	ts.Run(Authentication_signature_error_incorrect_secret_key)
 	ts.Run(Authentication_sigv2_not_supported)
+	ts.Run(Authentication_sigv2_malformed)
 	ts.Run(Authentication_with_expect_header)
 }
 
@@ -1386,6 +1387,7 @@ func GetIntTests() IntTests {
 		"Authentication_unsigned_non_required_header":                              Authentication_unsigned_non_required_header,
 		"Authentication_signature_error_incorrect_secret_key":                      Authentication_signature_error_incorrect_secret_key,
 		"Authentication_sigv2_not_supported":                                       Authentication_sigv2_not_supported,
+		"Authentication_sigv2_malformed":                                           Authentication_sigv2_malformed,
 		"Authentication_with_expect_header":                                        Authentication_with_expect_header,
 		"PresignedAuth_security_token_not_supported":                               PresignedAuth_security_token_not_supported,
 		"PresignedAuth_unsupported_algorithm":                                      PresignedAuth_unsupported_algorithm,
