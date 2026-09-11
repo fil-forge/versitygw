@@ -72,6 +72,9 @@ func NewInternal(rootAcc Account, dir string) (*IAMServiceInternal, error) {
 // CreateAccount creates a new IAM account. Returns an error if the account
 // already exists.
 func (s *IAMServiceInternal) CreateAccount(account Account) error {
+	if err := validateNewAccount(account); err != nil {
+		return err
+	}
 	if isRootAccess(s.rootAcc, account.Access) {
 		return ErrUserExists
 	}
@@ -103,6 +106,9 @@ func (s *IAMServiceInternal) CreateAccount(account Account) error {
 // GetUserAccount retrieves account info for the requested user. Returns
 // ErrNoSuchUser if the account does not exist.
 func (s *IAMServiceInternal) GetUserAccount(access string) (Account, error) {
+	if access == "" {
+		return Account{}, ErrNoSuchUser
+	}
 	if isRootAccess(s.rootAcc, access) {
 		return s.rootAcc, nil
 	}

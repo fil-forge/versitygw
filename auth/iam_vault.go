@@ -190,6 +190,9 @@ func (vt *VaultIAMService) reAuthIfNeeded(err error) error {
 }
 
 func (vt *VaultIAMService) CreateAccount(account Account) error {
+	if err := validateNewAccount(account); err != nil {
+		return err
+	}
 	if isRootAccess(vt.rootAcc, account.Access) {
 		return ErrUserExists
 	}
@@ -237,6 +240,9 @@ func (vt *VaultIAMService) CreateAccount(account Account) error {
 }
 
 func (vt *VaultIAMService) GetUserAccount(access string) (Account, error) {
+	if access == "" {
+		return Account{}, ErrNoSuchUser
+	}
 	if isRootAccess(vt.rootAcc, access) {
 		return vt.rootAcc, nil
 	}

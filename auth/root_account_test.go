@@ -48,3 +48,23 @@ func TestCheckIfAccountsExist_EmptyID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []string{""}, missing)
 }
+
+// TestValidateNewAccount pins that no IAM backend persists an account with an
+// empty access key: request authentication rejects such a key before any
+// lookup, so the entry could never be used.
+func TestValidateNewAccount(t *testing.T) {
+	assert.NoError(t, validateNewAccount(Account{Access: "user", Secret: "secret", Role: RoleUser}))
+	assert.Error(t, validateNewAccount(Account{Secret: "secret", Role: RoleUser}))
+}
+
+// TestIAMServiceSingle_EmptyAccess pins the lookup guard shared by every
+// backend: an empty access key is not found, whatever the root account.
+func TestIAMServiceSingle_EmptyAccess(t *testing.T) {
+	for name, root := range map[string]Account{
+		"root disabled": {},
+		"root enabled":  {Access: "root", Secret: "secret", Role: RoleAdmin},
+	} {
+		_, err := NewIAMServiceSingle(root).GetUserAccount("")
+		assert.Error(t, err, name)
+	}
+}

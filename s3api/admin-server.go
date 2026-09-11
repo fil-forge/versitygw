@@ -103,7 +103,11 @@ type AdminOpt func(s *S3AdminServer)
 // WithAdminRootUser enables the built-in root account on the admin server
 // (see WithRootUser).
 func WithAdminRootUser(root middlewares.RootUserConfig) AdminOpt {
-	return func(s *S3AdminServer) { s.root = root }
+	return func(s *S3AdminServer) {
+		if root.Enabled() {
+			s.root = root
+		}
+	}
 }
 
 func WithAdminSrvTLS(cs *utils.CertStorage) AdminOpt {

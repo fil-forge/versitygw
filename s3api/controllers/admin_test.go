@@ -72,6 +72,12 @@ func TestAdminController_CreateUser(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
+	missingAccessBody, err := xml.Marshal(auth.Account{
+		Secret: "secret",
+		Role:   auth.RoleUser,
+	})
+	assert.NoError(t, err)
+
 	tests := []struct {
 		name   string
 		input  testInput
@@ -99,6 +105,18 @@ func TestAdminController_CreateUser(t *testing.T) {
 					MetaOpts: &MetaOptions{},
 				},
 				err: s3err.GetAPIError(s3err.ErrAdminInvalidUserRole),
+			},
+		},
+		{
+			name: "missing access key",
+			input: testInput{
+				body: missingAccessBody,
+			},
+			output: testOutput{
+				response: &Response{
+					MetaOpts: &MetaOptions{},
+				},
+				err: s3err.GetAPIError(s3err.ErrAdminMissingUserAcess),
 			},
 		},
 		{
