@@ -344,7 +344,33 @@ func IsValidBucketName(bucket string) bool {
 		debuglogger.Logf("bucket name is an ip address: %v\n", bucket)
 		return false
 	}
+	// Adjacent periods, a period next to a hyphen, and the xn-- prefix are
+	// rejected by AWS but not expressible in the character-class regexp above.
+	if strings.Contains(bucket, "..") ||
+		strings.Contains(bucket, ".-") ||
+		strings.Contains(bucket, "-.") {
+		debuglogger.Logf("bucket name has adjacent period/hyphen: %v\n", bucket)
+		return false
+	}
+	if strings.HasPrefix(bucket, "xn--") {
+		debuglogger.Logf("bucket name uses the reserved xn-- prefix: %v\n", bucket)
+		return false
+	}
 	return true
+}
+
+// IsReservedBucketName reports whether a well-formed bucket name uses a prefix
+// or suffix AWS reserves for its own infrastructure (the S3 control plane,
+// access point aliases, Object Lambda). CreateBucket on these is rejected with
+// AccessDenied rather than InvalidBucketName: the name is valid but not one a
+// caller may take. Follows the strict-validation switch, like IsValidBucketName.
+func IsReservedBucketName(bucket string) bool {
+	if !strictBucketNameValidation.Load() {
+		return false
+	}
+	return strings.HasPrefix(bucket, "sthree-") ||
+		strings.HasSuffix(bucket, "-s3alias") ||
+		strings.HasSuffix(bucket, "--ol-s3")
 }
 
 func includeHeader(hdr string, signedHdrs []string) bool {

@@ -16,11 +16,13 @@ package utils
 
 import (
 	"net"
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/fil-forge/versitygw/aws/signer/v4"
+	"github.com/fil-forge/versitygw/s3err"
 	"github.com/gofiber/fiber/v3"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttputil"
@@ -149,5 +151,31 @@ func Test_Client_UserAgent(t *testing.T) {
 	req.Header.SetUserAgent(agent)
 	if err := client.Do(req, resp); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestAuthParseSigV2(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		authstr string
+		want    error
+	}{
+		{
+			name:    "well-formed sigv2 is unsupported",
+			authstr: "AWS AKIAIOSFODNN7EXAMPLE:frJIUN8DYpKDtOLCwo//yllqDzg=",
+			want:    s3err.GetAPIError(s3err.ErrUnsupportedAuthorizationMechanism),
+		},
+		{
+			name:    "sigv2 without key:signature is a malformed header",
+			authstr: "AWS seed_signature",
+			want:    s3err.GetInvalidArgumentErr(s3err.InvalidArgSigV2AuthHeader, "AWS seed_signature"),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := ParseAuthorization(tc.authstr)
+			if !reflect.DeepEqual(err, tc.want) {
+				t.Errorf("got %#v, want %#v", err, tc.want)
+			}
+		})
 	}
 }

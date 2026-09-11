@@ -770,7 +770,9 @@ type ObjectDeletePreconditions struct {
 func EvaluateObjectDeletePreconditions(etag string, modTime time.Time, size int64, preconditions ObjectDeletePreconditions) error {
 	etag = strings.Trim(etag, `"`)
 	ifMatch := preconditions.IfMatch
-	if ifMatch != nil && *ifMatch != etag {
+	// If-Match "*" matches any existing object; preconditions are only evaluated
+	// once the target object is known to exist, so "*" always passes here.
+	if ifMatch != nil && *ifMatch != "*" && *ifMatch != etag {
 		return s3err.GetPreconditionFailedErr(s3err.ConditionIfMatch)
 	}
 

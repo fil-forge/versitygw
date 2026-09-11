@@ -1184,21 +1184,20 @@ func (s *S3Proxy) GetObjectAttributes(ctx context.Context, input *s3.GetObjectAt
 	objParts := out.ObjectParts
 	if objParts != nil {
 		if objParts.PartNumberMarker != nil {
-			partNumberMarker, err := strconv.Atoi(*objParts.PartNumberMarker)
-			if err != nil {
-				parts.PartNumberMarker = partNumberMarker
+			if partNumberMarker, err := strconv.Atoi(*objParts.PartNumberMarker); err == nil {
+				parts.PartNumberMarker = &partNumberMarker
 			}
 			if objParts.NextPartNumberMarker != nil {
-				nextPartNumberMarker, err := strconv.Atoi(*objParts.NextPartNumberMarker)
-				if err != nil {
-					parts.NextPartNumberMarker = nextPartNumberMarker
+				if nextPartNumberMarker, err := strconv.Atoi(*objParts.NextPartNumberMarker); err == nil {
+					parts.NextPartNumberMarker = &nextPartNumberMarker
 				}
 			}
 			if objParts.IsTruncated != nil {
-				parts.IsTruncated = *objParts.IsTruncated
+				parts.IsTruncated = objParts.IsTruncated
 			}
 			if objParts.MaxParts != nil {
-				parts.MaxParts = int(*objParts.MaxParts)
+				mp := int(*objParts.MaxParts)
+				parts.MaxParts = &mp
 			}
 			parts.Parts = objParts.Parts
 		}

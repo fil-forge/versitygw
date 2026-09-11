@@ -35,6 +35,7 @@ const (
 	InvalidArgCopySourceEncoding
 	InvalidArgURLEncodedTagging
 	InvalidArgAuthHeader
+	InvalidArgSigV2AuthHeader
 	InvalidArgAuthorizationType
 	InvalidArgPOSTFileRequired
 	InvalidArgSHA256Payload
@@ -60,6 +61,7 @@ const (
 	InvalidArgDateHeader
 	InvalidArgIndexDocumentSuffix
 	InvalidArgErrorDocumentKey
+	InvalidArgContinuationToken
 )
 
 var invalidArgErrResponses = map[InvalidArgErrorCode]InvalidArgumentError{
@@ -105,6 +107,10 @@ var invalidArgErrResponses = map[InvalidArgErrorCode]InvalidArgumentError{
 	},
 	InvalidArgAuthHeader: {
 		Description:  "Authorization header is invalid -- one and only one ' ' (space) required.",
+		ArgumentName: "Authorization",
+	},
+	InvalidArgSigV2AuthHeader: {
+		Description:  "AWS authorization header is invalid.  Expected AwsAccessKeyId:signature",
 		ArgumentName: "Authorization",
 	},
 	InvalidArgAuthorizationType: {
@@ -206,6 +212,10 @@ var invalidArgErrResponses = map[InvalidArgErrorCode]InvalidArgumentError{
 	InvalidArgErrorDocumentKey: {
 		Description:  "The ErrorDocument Key is not well formed",
 		ArgumentName: "ErrorDocument",
+	},
+	InvalidArgContinuationToken: {
+		Description:  "The continuation token provided is incorrect",
+		ArgumentName: "continuation-token",
 	},
 }
 

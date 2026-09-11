@@ -1115,6 +1115,23 @@ func TestS3ApiController_ListObjectsV2(t *testing.T) {
 			},
 		},
 		{
+			name: "empty continuation token",
+			input: testInput{
+				locals: defaultLocals,
+				queries: map[string]string{
+					"continuation-token": "",
+				},
+			},
+			output: testOutput{
+				response: &Response{
+					MetaOpts: &MetaOptions{
+						BucketOwner: "root",
+					},
+				},
+				err: s3err.GetInvalidArgumentErr(s3err.InvalidArgContinuationToken, ""),
+			},
+		},
+		{
 			name: "successful response",
 			input: testInput{
 				locals: defaultLocals,

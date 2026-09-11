@@ -55,8 +55,8 @@ func Versioning_DeleteBucket_not_empty(s *S3Conf) error {
 func Versioning_PutObject_suspended_null_versionId_obj(s *S3Conf) error {
 	testName := "Versioning_PutObject_suspended_null_versionId_obj"
 	return actionHandler(s, testName, func(s3client *s3.Client, bucket string) error {
-		obj := "my-obj"
-		out, err := putObjectWithData(1222, &s3.PutObjectInput{
+		obj, lgth := "my-obj", int64(1222)
+		out, err := putObjectWithData(lgth, &s3.PutObjectInput{
 			Bucket: &bucket,
 			Key:    &obj,
 		}, s3client)
@@ -64,9 +64,36 @@ func Versioning_PutObject_suspended_null_versionId_obj(s *S3Conf) error {
 			return err
 		}
 
-		if getString(out.res.VersionId) != nullVersionId {
-			return fmt.Errorf("expected the uploaded object versionId to be %v, instead got %v",
-				nullVersionId, getString(out.res.VersionId))
+		// A suspended bucket stores the object as the "null" version but the
+		// PutObject response carries no x-amz-version-id header.
+		if out.res.VersionId != nil {
+			return fmt.Errorf("expected no versionId in the suspended bucket PutObject response, instead got %v",
+				*out.res.VersionId)
+		}
+
+		versions := []types.ObjectVersion{
+			{
+				ETag:         out.res.ETag,
+				IsLatest:     getBoolPtr(true),
+				Key:          &obj,
+				Size:         &lgth,
+				VersionId:    &nullVersionId,
+				StorageClass: types.ObjectVersionStorageClassStandard,
+			},
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), shortTimeout)
+		res, err := s3client.ListObjectVersions(ctx, &s3.ListObjectVersionsInput{
+			Bucket: &bucket,
+		})
+		cancel()
+		if err != nil {
+			return err
+		}
+
+		if !compareVersions(versions, res.Versions) {
+			return fmt.Errorf("expected the listed versions to be %v, instead got %v",
+				versions, res.Versions)
 		}
 
 		return nil
@@ -161,9 +188,11 @@ func Versioning_PutObject_overwrite_null_versionId_obj(s *S3Conf) error {
 			return err
 		}
 
-		if getString(out.res.VersionId) != nullVersionId {
-			return fmt.Errorf("expected the uploaded object versionId to be %v, insted got %v",
-				nullVersionId, getString(out.res.VersionId))
+		// A suspended bucket stores the object as the "null" version but the
+		// PutObject response carries no x-amz-version-id header.
+		if out.res.VersionId != nil {
+			return fmt.Errorf("expected no versionId in the suspended bucket PutObject response, instead got %v",
+				*out.res.VersionId)
 		}
 
 		versions[0].IsLatest = getBoolPtr(false)

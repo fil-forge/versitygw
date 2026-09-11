@@ -620,8 +620,16 @@ func (c S3ApiController) CopyObject(ctx fiber.Ctx) (*Response, error) {
 
 	res, err := c.be.CopyObject(ctx.RequestCtx(),
 		s3response.CopyObjectInput{
-			Bucket:                      &bucket,
-			Key:                         &key,
+			Bucket: &bucket,
+			Key:    &key,
+			// Forward the requested ACL so backends that do not model ACLs can
+			// reject a request that sets one. Absent grant headers stay nil
+			// (GetStringPtr) to distinguish "unset" from an explicit empty value.
+			ACL:                         types.ObjectCannedACL(c.getAclHeaderValue(ctx, "X-Amz-Acl")),
+			GrantFullControl:            utils.GetStringPtr(c.getAclHeaderValue(ctx, "X-Amz-Grant-Full-Control")),
+			GrantRead:                   utils.GetStringPtr(c.getAclHeaderValue(ctx, "X-Amz-Grant-Read")),
+			GrantReadACP:                utils.GetStringPtr(c.getAclHeaderValue(ctx, "X-Amz-Grant-Read-Acp")),
+			GrantWriteACP:               utils.GetStringPtr(c.getAclHeaderValue(ctx, "X-Amz-Grant-Write-Acp")),
 			ContentType:                 &contentType,
 			ContentDisposition:          &contentDisposition,
 			ContentEncoding:             &contentEncoding,
@@ -797,10 +805,23 @@ func (c S3ApiController) PutObject(ctx fiber.Ctx) (*Response, error) {
 
 	ifMatch, ifNoneMatch := utils.ParsePreconditionMatchHeaders(ctx)
 
+	acl := types.ObjectCannedACL(c.getAclHeaderValue(ctx, "X-Amz-Acl"))
+	grantFullControl := c.getAclHeaderValue(ctx, "X-Amz-Grant-Full-Control")
+	grantRead := c.getAclHeaderValue(ctx, "X-Amz-Grant-Read")
+	grantReadACP := c.getAclHeaderValue(ctx, "X-Amz-Grant-Read-Acp")
+	grantWriteACP := c.getAclHeaderValue(ctx, "X-Amz-Grant-Write-Acp")
+
 	res, err := c.be.PutObject(ctx.RequestCtx(),
 		s3response.PutObjectInput{
-			Bucket:                    &bucket,
-			Key:                       &key,
+			Bucket: &bucket,
+			Key:    &key,
+			// Forward the requested ACL so backends that do not model ACLs can
+			// reject a request that sets one; backends that store ACLs use it.
+			ACL:                       acl,
+			GrantFullControl:          utils.GetStringPtr(grantFullControl),
+			GrantRead:                 utils.GetStringPtr(grantRead),
+			GrantReadACP:              utils.GetStringPtr(grantReadACP),
+			GrantWriteACP:             utils.GetStringPtr(grantWriteACP),
 			ContentLength:             &contentLength,
 			ContentType:               &contentType,
 			ContentEncoding:           &contentEncoding,
@@ -843,7 +864,7 @@ func (c S3ApiController) PutObject(ctx fiber.Ctx) (*Response, error) {
 			"x-amz-checksum-xxhash3":   res.ChecksumXXHASH3,
 			"x-amz-checksum-xxhash128": res.ChecksumXXHASH128,
 			"x-amz-checksum-type":      utils.ConvertToStringPtr(res.ChecksumType),
-			"x-amz-version-id":         &res.VersionID,
+			"x-amz-version-id":         putObjectVersionIdHeader(res.VersionID),
 			"x-amz-object-size":        utils.ConvertPtrToStringPtr(res.Size),
 		},
 		MetaOpts: &MetaOptions{
@@ -854,4 +875,19 @@ func (c S3ApiController) PutObject(ctx fiber.Ctx) (*Response, error) {
 			EventName:     s3event.EventObjectCreatedPut,
 		},
 	}, err
+}
+
+// nullVersionId is the version id of an object written while bucket versioning
+// is off or suspended.
+const nullVersionId = "null"
+
+// putObjectVersionIdHeader returns the x-amz-version-id value for a PutObject
+// response. AWS only sends the header for a version it generated: a PUT into a
+// bucket with versioning suspended stores the "null" version and the response
+// carries no x-amz-version-id at all.
+func putObjectVersionIdHeader(versionId string) *string {
+	if versionId == nullVersionId {
+		return nil
+	}
+	return &versionId
 }
