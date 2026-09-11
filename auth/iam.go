@@ -213,7 +213,7 @@ func New(o *Opts) (IAMService, error) {
 // root account (the gateway running without one) matches nothing, so an
 // empty access key can never resolve to it.
 func isRootAccess(root Account, access string) bool {
-	return root.Access != "" && access == root.Access
+return root.Access != "" && root.Secret != "" && access == root.Access
 }
 
 // validateNewAccount rejects an account no request could ever authenticate
