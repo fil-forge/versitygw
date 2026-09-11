@@ -34,17 +34,24 @@ const (
 
 // RootUserConfig is the gateway's built-in root account: an access key the
 // auth middlewares resolve directly, ahead of the IAM service, with the admin
-// role and every ACL / policy check skipped. A zero-value config disables the
-// root account, so every access key (an empty one included) resolves through
-// the IAM service.
+// role and every ACL / policy check skipped.
+//
+// A config without both credentials disables the root account: every
+// non-empty access key then resolves through the IAM service, and an empty
+// access key is rejected outright (it names no account). Without a root
+// account a bucket whose stored ACL carries no owner has no owner at all, so
+// only admin-role accounts pass its owner checks; backends should persist
+// the creating account as owner.
 type RootUserConfig struct {
 	Access string
 	Secret string
 }
 
-// Enabled reports whether a root account is configured.
+// Enabled reports whether a root account is configured: both the access key
+// and the secret must be set, so a partial config cannot grant admin access
+// against an empty secret.
 func (r RootUserConfig) Enabled() bool {
-	return r.Access != ""
+	return r.Access != "" && r.Secret != ""
 }
 
 // matches reports whether access names the root account. It is false when
@@ -235,9 +242,7 @@ type RequestIAMService interface {
 
 func (a accounts) getAccount(ctx fiber.Ctx, access string) (auth.Account, error) {
 	// An empty access key names no account. Reject it here, before any IAM
-	// lookup: the built-in IAM services compare the access key against the
-	// root account they were constructed with, and with root disabled that
-	// account is the zero value, which an empty key would otherwise match.
+	// lookup, so no backend has to reason about it.
 	if access == "" {
 		return auth.Account{}, auth.ErrNoSuchUser
 	}

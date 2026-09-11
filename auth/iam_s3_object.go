@@ -107,7 +107,7 @@ func NewS3(rootAcc Account, access, secret, region, bucket, endpoint string, ssl
 }
 
 func (s *IAMServiceS3) CreateAccount(account Account) error {
-	if s.rootAcc.Access == account.Access {
+	if isRootAccess(s.rootAcc, account.Access) {
 		return ErrUserExists
 	}
 
@@ -129,7 +129,7 @@ func (s *IAMServiceS3) CreateAccount(account Account) error {
 }
 
 func (s *IAMServiceS3) GetUserAccount(access string) (Account, error) {
-	if access == s.rootAcc.Access {
+	if isRootAccess(s.rootAcc, access) {
 		return s.rootAcc, nil
 	}
 

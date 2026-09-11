@@ -39,7 +39,7 @@ func (IAMServiceSingle) CreateAccount(account Account) error {
 // GetUserAccount returns root account, if the root access key
 // is provided and "ErrAdminUserNotFound" otherwise
 func (s IAMServiceSingle) GetUserAccount(access string) (Account, error) {
-	if access == s.root.Access {
+	if isRootAccess(s.root, access) {
 		return s.root, nil
 	}
 	return Account{}, s3err.GetAPIError(s3err.ErrAdminUserNotFound)

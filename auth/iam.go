@@ -208,3 +208,10 @@ func New(o *Opts) (IAMService, error) {
 		time.Duration(o.CacheTTL)*time.Second,
 		time.Duration(o.CachePrune)*time.Second), nil
 }
+
+// isRootAccess reports whether access names the root account root. A zero
+// root account (the gateway running without one) matches nothing, so an
+// empty access key can never resolve to it.
+func isRootAccess(root Account, access string) bool {
+	return root.Access != "" && access == root.Access
+}

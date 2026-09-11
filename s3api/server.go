@@ -75,7 +75,8 @@ type middlewareMount struct {
 }
 
 // New constructs the S3 API server. The gateway runs without a root account
-// unless WithRootUser is passed: every access key then resolves through iam.
+// unless WithRootUser is passed: every non-empty access key then resolves
+// through iam, and an empty access key is rejected before any lookup.
 func New(
 	be backend.Backend,
 	region string,
@@ -248,8 +249,9 @@ func WithTLS(cs *utils.CertStorage) Option {
 
 // WithRootUser enables the built-in root account: an access key the auth
 // middlewares resolve ahead of the IAM service, with the admin role and every
-// ACL / policy check skipped. Without this option the gateway has no root
-// account (see middlewares.RootUserConfig).
+// ACL / policy check skipped. A config missing either credential is ignored.
+// Without a root account the gateway resolves every access key through iam
+// (see middlewares.RootUserConfig for the ownership consequences).
 func WithRootUser(root middlewares.RootUserConfig) Option {
 	return func(s *S3ApiServer) { s.Router.root = root }
 }

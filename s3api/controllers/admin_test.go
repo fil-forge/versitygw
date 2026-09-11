@@ -507,10 +507,41 @@ func TestAdminController_ChangeBucketOwner(t *testing.T) {
 				ctrl.ChangeBucketOwner,
 				tt.output.response,
 				tt.output.err,
-				ctxInputs{},
+				ctxInputs{
+					queries: map[string]string{
+						"bucket": "bucket",
+						"owner":  "owner",
+					},
+				},
 			)
 		})
 	}
+}
+
+// TestAdminController_ChangeBucketOwner_EmptyOwner pins that an empty owner
+// is rejected as an unknown user without consulting IAM: with no root account
+// the IAM backends hold a zero root, which an empty id must never resolve to.
+func TestAdminController_ChangeBucketOwner_EmptyOwner(t *testing.T) {
+	iam := &IAMServiceMock{
+		GetUserAccountFunc: func(access string) (auth.Account, error) {
+			t.Fatalf("IAM consulted for empty owner %q", access)
+			return auth.Account{}, nil
+		},
+	}
+	be := &BackendMock{
+		ChangeBucketOwnerFunc: func(contextMoqParam context.Context, bucket, owner string) error {
+			t.Fatalf("backend called with empty owner")
+			return nil
+		},
+	}
+
+	testController(
+		t,
+		AdminController{iam: iam, be: be}.ChangeBucketOwner,
+		&Response{MetaOpts: &MetaOptions{}},
+		s3err.GetAPIError(s3err.ErrAdminUserNotFound),
+		ctxInputs{queries: map[string]string{"bucket": "bucket"}},
+	)
 }
 
 func TestAdminController_ListBuckets(t *testing.T) {

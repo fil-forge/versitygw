@@ -134,7 +134,7 @@ func (ld *LdapIAMService) execute(f func(*ldap.Conn) error) error {
 }
 
 func (ld *LdapIAMService) CreateAccount(account Account) error {
-	if ld.rootAcc.Access == account.Access {
+	if isRootAccess(ld.rootAcc, account.Access) {
 		return ErrUserExists
 	}
 	userEntry := ldap.NewAddRequest(ld.buildUserDN(account.Access), nil)
@@ -172,7 +172,7 @@ func (ld *LdapIAMService) buildSearchFilter(access string) string {
 }
 
 func (ld *LdapIAMService) GetUserAccount(access string) (Account, error) {
-	if access == ld.rootAcc.Access {
+	if isRootAccess(ld.rootAcc, access) {
 		return ld.rootAcc, nil
 	}
 	var result *ldap.SearchResult

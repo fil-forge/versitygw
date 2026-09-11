@@ -48,6 +48,12 @@ func TestRootUserConfig_Matches(t *testing.T) {
 	assert.False(t, disabled.Enabled())
 	assert.False(t, disabled.matches(""))
 	assert.False(t, disabled.matches("root"))
+
+	// A partial config is disabled too: an access key without a secret must
+	// not grant root against an empty secret.
+	partial := RootUserConfig{Access: "root"}
+	assert.False(t, partial.Enabled())
+	assert.False(t, partial.matches("root"))
 }
 
 func TestAccounts_GetAccount_RootDisabled(t *testing.T) {
