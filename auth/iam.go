@@ -215,3 +215,13 @@ func New(o *Opts) (IAMService, error) {
 func isRootAccess(root Account, access string) bool {
 	return root.Access != "" && access == root.Access
 }
+
+// validateNewAccount rejects an account no request could ever authenticate
+// as: the auth middlewares refuse an empty access key before any IAM lookup,
+// so persisting one would only create an unusable entry.
+func validateNewAccount(account Account) error {
+	if account.Access == "" {
+		return s3err.GetAPIError(s3err.ErrAdminMissingUserAcess)
+	}
+	return nil
+}

@@ -253,7 +253,11 @@ func WithTLS(cs *utils.CertStorage) Option {
 // Without a root account the gateway resolves every access key through iam
 // (see middlewares.RootUserConfig for the ownership consequences).
 func WithRootUser(root middlewares.RootUserConfig) Option {
-	return func(s *S3ApiServer) { s.Router.root = root }
+	return func(s *S3ApiServer) {
+		if root.Enabled() {
+			s.Router.root = root
+		}
+	}
 }
 
 // WithAdminServer runs admin endpoints with the gateway in the same network
