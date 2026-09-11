@@ -52,6 +52,11 @@ func (c AdminController) CreateUser(ctx fiber.Ctx) (*Response, error) {
 			MetaOpts: &MetaOptions{},
 		}, s3err.GetAPIError(s3err.ErrAdminInvalidUserRole)
 	}
+	if usr.Access == "" {
+		return &Response{
+			MetaOpts: &MetaOptions{},
+		}, s3err.GetAPIError(s3err.ErrAdminMissingUserAcess)
+	}
 
 	err = c.iam.CreateAccount(usr)
 	if err != nil {
