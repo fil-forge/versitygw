@@ -157,3 +157,30 @@ func TestValidatePortConflicts(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateRootUser(t *testing.T) {
+	tests := []struct {
+		name        string
+		cfg         Config
+		expectError bool
+	}{
+		{name: "root set, no IAM backend", cfg: Config{RootUserAccess: "root", RootUserSecret: "secret"}},
+		{name: "root set with IAM backend", cfg: Config{RootUserAccess: "root", RootUserSecret: "secret", IAMDir: "/iam"}},
+		{name: "root disabled with IAM backend", cfg: Config{IAMDir: "/iam"}},
+		{name: "root disabled with LDAP backend", cfg: Config{LDAPServerURL: "ldap://iam"}},
+		{name: "root disabled, no IAM backend", cfg: Config{}, expectError: true},
+		{name: "access without secret", cfg: Config{RootUserAccess: "root", IAMDir: "/iam"}, expectError: true},
+		{name: "secret without access", cfg: Config{RootUserSecret: "secret", IAMDir: "/iam"}, expectError: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateRootUser(&tt.cfg)
+			if tt.expectError && err == nil {
+				t.Fatalf("expected an error")
+			}
+			if !tt.expectError && err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+	}
+}

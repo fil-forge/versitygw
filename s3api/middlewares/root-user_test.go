@@ -54,11 +54,30 @@ func TestAccounts_GetAccount_RootDisabled(t *testing.T) {
 	iam := &recordingIAM{}
 	acct := accounts{root: RootUserConfig{}, iam: iam}
 
-	for _, access := range []string{"", "root", "someone"} {
+	for _, access := range []string{"root", "someone"} {
 		_, err := acct.getAccount(fiber.Ctx(nil), access)
 		assert.True(t, errors.Is(err, auth.ErrNoSuchUser), "access %q must resolve through IAM", access)
 	}
-	assert.Equal(t, []string{"", "root", "someone"}, iam.lookups)
+	assert.Equal(t, []string{"root", "someone"}, iam.lookups)
+}
+
+// TestAccounts_GetAccount_EmptyAccess covers the IAM backends that compare the
+// access key against the root account they were built with: with root
+// disabled that account is the zero value, so an empty access key must be
+// rejected before any backend sees it.
+func TestAccounts_GetAccount_EmptyAccess(t *testing.T) {
+	for name, root := range map[string]RootUserConfig{
+		"root disabled": {},
+		"root enabled":  {Access: "root", Secret: "secret"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			single := auth.NewIAMServiceSingle(auth.Account{Access: root.Access, Secret: root.Secret, Role: auth.RoleAdmin})
+			acct := accounts{root: root, iam: single}
+
+			_, err := acct.getAccount(fiber.Ctx(nil), "")
+			assert.True(t, errors.Is(err, auth.ErrNoSuchUser), "empty access key must never resolve to an account")
+		})
+	}
 }
 
 func TestAccounts_GetAccount_RootEnabled(t *testing.T) {
@@ -70,7 +89,7 @@ func TestAccounts_GetAccount_RootEnabled(t *testing.T) {
 	assert.Equal(t, auth.Account{Access: "root", Secret: "secret", Role: auth.RoleAdmin}, got)
 	assert.Empty(t, iam.lookups, "the root key never reaches IAM")
 
-	_, err = acct.getAccount(fiber.Ctx(nil), "")
+	_, err = acct.getAccount(fiber.Ctx(nil), "other")
 	assert.True(t, errors.Is(err, auth.ErrNoSuchUser))
-	assert.Equal(t, []string{""}, iam.lookups)
+	assert.Equal(t, []string{"other"}, iam.lookups)
 }

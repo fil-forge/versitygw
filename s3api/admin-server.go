@@ -42,9 +42,12 @@ type S3AdminServer struct {
 	maxConnections  int
 	maxRequests     int
 	socketPerm      os.FileMode
+	root            middlewares.RootUserConfig
 }
 
-func NewAdminServer(be backend.Backend, root middlewares.RootUserConfig, region string, iam auth.IAMService, l s3log.AuditLogger, ctrl controllers.S3ApiController, opts ...AdminOpt) *S3AdminServer {
+// NewAdminServer constructs the admin API server. The root account is
+// disabled unless WithAdminRootUser is passed.
+func NewAdminServer(be backend.Backend, region string, iam auth.IAMService, l s3log.AuditLogger, ctrl controllers.S3ApiController, opts ...AdminOpt) *S3AdminServer {
 	server := &S3AdminServer{
 		backend: be,
 		router: &S3AdminRouter{
@@ -90,12 +93,18 @@ func NewAdminServer(be backend.Backend, root middlewares.RootUserConfig, region 
 		app.Use("*", middlewares.DebugLogger())
 	}
 
-	server.router.Init(app, be, iam, l, root, region, server.debug, server.corsAllowOrigin)
+	server.router.Init(app, be, iam, l, server.root, region, server.debug, server.corsAllowOrigin)
 
 	return server
 }
 
 type AdminOpt func(s *S3AdminServer)
+
+// WithAdminRootUser enables the built-in root account on the admin server
+// (see WithRootUser).
+func WithAdminRootUser(root middlewares.RootUserConfig) AdminOpt {
+	return func(s *S3AdminServer) { s.root = root }
+}
 
 func WithAdminSrvTLS(cs *utils.CertStorage) AdminOpt {
 	return func(s *S3AdminServer) { s.CertStorage = cs }
