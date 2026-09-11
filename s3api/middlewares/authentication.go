@@ -28,9 +28,8 @@ import (
 )
 
 const (
-	iso8601Format   = "20060102T150405Z"
-	maxObjSizeLimit = 5 * 1024 * 1024 * 1024 // 5gb
-	defaultRegion   = "us-east-1"
+	iso8601Format = "20060102T150405Z"
+	defaultRegion = "us-east-1"
 )
 
 type RootUserConfig struct {
@@ -178,8 +177,8 @@ func VerifyV4Signature(root RootUserConfig, iam auth.IAMService, region string, 
 			}
 			// the upload limit for big data actions: PutObject, UploadPart
 			// is 5gb. If the size exceeds the limit, return 'EntityTooLarge' err
-			if contentLength > maxObjSizeLimit {
-				return s3err.GetEntityTooLargeErr(contentLength, maxObjSizeLimit)
+			if contentLength > utils.MaxObjSizeLimit {
+				return s3err.GetEntityTooLargeErr(contentLength, utils.MaxObjSizeLimit)
 			}
 
 			return nil

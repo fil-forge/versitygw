@@ -29,7 +29,12 @@ import (
 )
 
 const (
-	maxObjSizeLimit = 5 * 1024 * 1024 * 1024 // 5gb
+	// MaxObjSizeLimit is the largest single PutObject/UploadPart payload S3
+	// accepts (5 GiB). Enforced on the declared length before the body is
+	// read: by the server's Expect handler for clients that send
+	// "Expect: 100-continue", and by the auth middlewares and the chunk
+	// reader for everything else.
+	MaxObjSizeLimit = 5 * 1024 * 1024 * 1024
 )
 
 type payloadType string
@@ -184,9 +189,9 @@ func ParseDecodedContentLength(ctx fiber.Ctx) (int64, error) {
 		return 0, s3err.GetAPIError(s3err.ErrMissingContentLength)
 	}
 
-	if decContLength > maxObjSizeLimit {
-		debuglogger.Logf("the object size exceeds the allowed limit: (size): %v, (limit): %v", decContLength, int64(maxObjSizeLimit))
-		return 0, s3err.GetEntityTooLargeErr(decContLength, maxObjSizeLimit)
+	if decContLength > MaxObjSizeLimit {
+		debuglogger.Logf("the object size exceeds the allowed limit: (size): %v, (limit): %v", decContLength, int64(MaxObjSizeLimit))
+		return 0, s3err.GetEntityTooLargeErr(decContLength, MaxObjSizeLimit)
 	}
 
 	return decContLength, nil
