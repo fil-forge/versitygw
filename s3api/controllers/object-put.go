@@ -864,7 +864,7 @@ func (c S3ApiController) PutObject(ctx fiber.Ctx) (*Response, error) {
 			"x-amz-checksum-xxhash3":   res.ChecksumXXHASH3,
 			"x-amz-checksum-xxhash128": res.ChecksumXXHASH128,
 			"x-amz-checksum-type":      utils.ConvertToStringPtr(res.ChecksumType),
-			"x-amz-version-id":         &res.VersionID,
+			"x-amz-version-id":         putObjectVersionIdHeader(res.VersionID),
 			"x-amz-object-size":        utils.ConvertPtrToStringPtr(res.Size),
 		},
 		MetaOpts: &MetaOptions{
@@ -875,4 +875,19 @@ func (c S3ApiController) PutObject(ctx fiber.Ctx) (*Response, error) {
 			EventName:     s3event.EventObjectCreatedPut,
 		},
 	}, err
+}
+
+// nullVersionId is the version id of an object written while bucket versioning
+// is off or suspended.
+const nullVersionId = "null"
+
+// putObjectVersionIdHeader returns the x-amz-version-id value for a PutObject
+// response. AWS only sends the header for a version it generated: a PUT into a
+// bucket with versioning suspended stores the "null" version and the response
+// carries no x-amz-version-id at all.
+func putObjectVersionIdHeader(versionId string) *string {
+	if versionId == nullVersionId {
+		return nil
+	}
+	return &versionId
 }
