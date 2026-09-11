@@ -384,6 +384,11 @@ func CheckIfAccountsExist(accs []string, iam IAMService) ([]string, error) {
 	result := []string{}
 
 	for _, acc := range accs {
+		// An empty id names no account; report it missing without asking IAM.
+		if acc == "" {
+			result = append(result, acc)
+			continue
+		}
 		_, err := iam.GetUserAccount(acc)
 		if err != nil {
 			if err == ErrNoSuchUser || err == s3err.GetAPIError(s3err.ErrAdminUserNotFound) {

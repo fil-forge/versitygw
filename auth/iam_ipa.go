@@ -120,7 +120,7 @@ func (ipa *IpaIAMService) CreateAccount(account Account) error {
 }
 
 func (ipa *IpaIAMService) GetUserAccount(access string) (Account, error) {
-	if access == ipa.rootAcc.Access {
+	if isRootAccess(ipa.rootAcc, access) {
 		return ipa.rootAcc, nil
 	}
 
