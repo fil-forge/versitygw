@@ -112,16 +112,19 @@ httpRoute:
             value: /
 
 # --- Root credentials ---
-# The root S3 access credentials. These are required for the gateway to start.
+# The root S3 account, which is granted full access to every request.
+# Leave existingSecret, accessKey and secretKey all empty to run without a
+# root account; every access key is then authenticated through the IAM backend,
+# so this requires iam.enabled=true.
 # IMPORTANT: For production use, set auth.existingSecret instead of storing
 # credentials in this values file.
 auth:
   # If set, use this existing Kubernetes Secret for credentials instead of creating one.
   # The secret must contain the keys: rootAccessKeyId and rootSecretAccessKey
   existingSecret: ""
-  # Root access key ID (used when existingSecret is empty)
+  # Root access key ID (used when existingSecret is empty; set together with secretKey)
   accessKey: ""
-  # Root secret access key (used when existingSecret is empty)
+  # Root secret access key (used when existingSecret is empty; set together with accessKey)
   secretKey: ""
 
 # --- Versity Gateway server configuration ---

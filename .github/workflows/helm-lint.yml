@@ -13,5 +13,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Lint chart
+      - name: Lint chart (root account)
         run: helm lint chart/ --strict --set auth.accessKey=dummy --set auth.secretKey=dummy
+
+      - name: Lint chart (no root account, IAM backend)
+        run: helm lint chart/ --strict --set iam.enabled=true
