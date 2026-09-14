@@ -4,7 +4,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG SECRETS_FILE=tests/.secrets.direct
 ARG CONFIG_FILE=tests/.env.direct
 ARG AWS_CLI=awscli-exe-linux-aarch64.zip
-ARG MC_FOLDER=linux-arm64
 
 ENV TZ=Etc/UTC
 RUN apt-get update && \
@@ -28,12 +27,8 @@ WORKDIR /tmp
 # Install AWS cli
 RUN curl "https://awscli.amazonaws.com/${AWS_CLI}" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install
 
-# Install mc
-RUN curl https://dl.min.io/client/mc/release/${MC_FOLDER}/mc \
-  --create-dirs \
-  -o /usr/local/minio-binaries/mc && \
-chmod -R 755 /usr/local/minio-binaries
-ENV PATH=/usr/local/minio-binaries:${PATH}
+# mc is not installed: dl.min.io no longer serves the MinIO client binaries
+# (HTTP 410), so the mc test suites are not run.
 
 # Create tester user
 RUN groupadd -r tester && useradd -r -g tester tester
