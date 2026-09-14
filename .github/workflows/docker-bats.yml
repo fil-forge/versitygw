@@ -17,7 +17,6 @@ jobs:
           docker build \
             --build-arg="GO_LIBRARY=go1.23.1.linux-amd64.tar.gz" \
             --build-arg="AWS_CLI=awscli-exe-linux-x86_64.zip" \
-            --build-arg="MC_FOLDER=linux-amd64" \
             --progress=plain \
             -f tests/Dockerfile_test_bats \
             -t bats_test .
