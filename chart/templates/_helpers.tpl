@@ -62,6 +62,16 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
+Whether the deployment runs with a root account. Root credentials come from
+auth.existingSecret or from auth.accessKey/auth.secretKey; when none is set
+the gateway starts without a root account and authenticates every access key
+through the IAM backend.
+*/}}
+{{- define "versitygw.rootCredentialsEnabled" -}}
+{{- if or .Values.auth.existingSecret .Values.auth.accessKey .Values.auth.secretKey }}true{{- end }}
+{{- end }}
+
+{{/*
 The name of the Secret holding the root S3 credentials.
 Uses auth.existingSecret if set, otherwise derives a name from the release fullname.
 */}}

@@ -52,9 +52,13 @@ const awsDefaultRegion = "us-east-1"
 type Config struct {
 	// RootUserAccess is the access key ID for the root account. The root
 	// account is granted full authorization to all API requests after
-	// authentication. Required.
+	// authentication. Leave both RootUserAccess and RootUserSecret empty to
+	// run without a root account, so every access key resolves through the
+	// configured IAM backend; that requires one of the IAM backends below,
+	// since single-account mode has no other account to authenticate.
 	RootUserAccess string
-	// RootUserSecret is the secret access key for the root account. Required.
+	// RootUserSecret is the secret access key for the root account. Required
+	// whenever RootUserAccess is set.
 	RootUserSecret string
 	// Region is the AWS region name reported to S3 clients (e.g. "us-east-1").
 	// Defaults to "us-east-1" when empty.
@@ -167,10 +171,11 @@ type Config struct {
 	//   4. VaultEndpointURL -- HashiCorp Vault
 	//   5. IpaHost         -- FreeIPA
 	//
-	// Configuring an IAM backend is optional. When none of the trigger fields
-	// above are set, the gateway runs in single-account mode: only the root
-	// account (RootUserAccess/RootUserSecret) exists and the user management
-	// API is unavailable.
+	// Configuring an IAM backend is optional when a root account is set. When
+	// none of the trigger fields above are set, the gateway runs in
+	// single-account mode: only the root account (RootUserAccess/
+	// RootUserSecret) exists and the user management API is unavailable.
+	// Without a root account an IAM backend is required.
 	//
 	// The IAMCache fields below apply to all backends except single-account
 	// mode.
@@ -481,8 +486,8 @@ func RunVersityGW(ctx context.Context, be backend.Backend, cfg *Config) error {
 	}
 	defer gatewayRunning.Store(false)
 
-	if cfg.RootUserAccess == "" || cfg.RootUserSecret == "" {
-		return fmt.Errorf("root user access and secret key must be provided")
+	if err := validateRootUser(cfg); err != nil {
+		return err
 	}
 
 	err := validateWebUIPathPrefix("WebuiPathPrefix", cfg.WebuiPathPrefix)
@@ -762,10 +767,12 @@ func RunVersityGW(ctx context.Context, be backend.Backend, cfg *Config) error {
 		}))
 	}
 
-	srv, err := s3api.New(be, middlewares.RootUserConfig{
-		Access: cfg.RootUserAccess,
-		Secret: cfg.RootUserSecret,
-	}, cfg.Region, iam, loggers.S3Logger, loggers.AdminLogger, evSender, metricsManager, opts...)
+	root := middlewares.RootUserConfig{Access: cfg.RootUserAccess, Secret: cfg.RootUserSecret}
+	if root.Enabled() {
+		opts = append(opts, s3api.WithRootUser(root))
+	}
+
+	srv, err := s3api.New(be, cfg.Region, iam, loggers.S3Logger, loggers.AdminLogger, evSender, metricsManager, opts...)
 	if err != nil {
 		return fmt.Errorf("init gateway: %v", err)
 	}
@@ -815,7 +822,11 @@ func RunVersityGW(ctx context.Context, be backend.Backend, cfg *Config) error {
 			admOpts = append(admOpts, s3api.WithAdminSocketPerm(parsedSocketPerm))
 		}
 
-		admSrv = s3api.NewAdminServer(be, middlewares.RootUserConfig{Access: cfg.RootUserAccess, Secret: cfg.RootUserSecret}, cfg.Region, iam, loggers.AdminLogger, srv.Router.Ctrl, admOpts...)
+		if root.Enabled() {
+			admOpts = append(admOpts, s3api.WithAdminRootUser(root))
+		}
+
+		admSrv = s3api.NewAdminServer(be, cfg.Region, iam, loggers.AdminLogger, srv.Router.Ctrl, admOpts...)
 	}
 
 	var webSrv *webui.Server
@@ -1719,5 +1730,25 @@ func validatePortConflicts(ports, admPorts, webuiPorts, websitePorts []string) e
 		}
 	}
 
+	return nil
+}
+
+// iamBackendConfigured reports whether any of the IAM backend trigger fields
+// is set (see the IAM Backends section of Config).
+func (c *Config) iamBackendConfigured() bool {
+	return c.IAMDir != "" || c.LDAPServerURL != "" || c.S3IAMEndpoint != "" ||
+		c.VaultEndpointURL != "" || c.IpaHost != ""
+}
+
+// validateRootUser checks the root account contract: the access key and
+// secret are set together or not at all, and a gateway without a root
+// account has an IAM backend to authenticate against.
+func validateRootUser(cfg *Config) error {
+	if (cfg.RootUserAccess == "") != (cfg.RootUserSecret == "") {
+		return fmt.Errorf("root user access and secret key must be provided together")
+	}
+	if cfg.RootUserAccess == "" && !cfg.iamBackendConfigured() {
+		return fmt.Errorf("root user access and secret key must be provided when no IAM backend is configured")
+	}
 	return nil
 }
