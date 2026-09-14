@@ -37,7 +37,7 @@ helm install my-versitygw oci://ghcr.io/versity/versitygw/charts/versitygw \
   --set persistence.enabled=true
 ```
 
-Leave `auth.existingSecret`, `auth.accessKey` and `auth.secretKey` empty and the chart neither creates the credentials Secret nor passes root credentials to the gateway. Accounts are then created through the admin API with an IAM user's credentials, so `iam.enabled=true` is required.
+Leave `auth.existingSecret`, `auth.accessKey` and `auth.secretKey` empty and the chart neither creates the credentials Secret nor passes root credentials to the gateway. With the default internal IAM backend, provision an initial `RoleAdmin` account in the IAM store (or use an external IAM backend) before using the admin API, because a fresh rootless store has no account that can authenticate the first request.
 
 ## Upgrading
 
