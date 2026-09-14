@@ -710,6 +710,7 @@ func TestS3ApiController_PutBucketPolicy(t *testing.T) {
 func TestS3ApiController_CreateBucket(t *testing.T) {
 	adminAcc := auth.Account{
 		Access: "root",
+		Secret: "secret",
 		Role:   auth.RoleAdmin,
 	}
 	userAcc := auth.Account{
@@ -1217,6 +1218,7 @@ func TestS3ApiController_PutBucketAcl(t *testing.T) {
 				iam: auth.NewIAMServiceSingle(
 					auth.Account{
 						Access: "root",
+						Secret: "secret",
 					}),
 			}
 
