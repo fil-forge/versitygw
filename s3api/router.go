@@ -16,6 +16,7 @@ package s3api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/backend"
@@ -46,10 +47,11 @@ type S3ApiRouter struct {
 	virtualDomain           string
 	corsAllowOrigin         string
 	mpMaxParts              int
+	completeMpKeepalive     time.Duration
 }
 
 func (sa *S3ApiRouter) Init() {
-	ctrl := controllers.New(sa.be, sa.iam, sa.logger, sa.evs, sa.mm, sa.readonly, sa.disableACL, sa.virtualDomain, sa.mpMaxParts)
+	ctrl := controllers.New(sa.be, sa.iam, sa.logger, sa.evs, sa.mm, sa.readonly, sa.disableACL, sa.virtualDomain, sa.mpMaxParts, sa.completeMpKeepalive)
 	sa.Ctrl = ctrl
 	adminServices := &controllers.Services{
 		Logger: sa.aLogger,
