@@ -446,6 +446,9 @@ func FilterObjectAttributes(attrs map[s3response.ObjectAttributes]struct{}, outp
 	if _, ok := attrs[s3response.ObjectAttributesChecksum]; !ok {
 		output.Checksum = nil
 	}
+	if _, ok := attrs[s3response.ObjectAttributesBlake3]; !ok {
+		output.Blake3 = nil
+	}
 
 	return output
 }
