@@ -5,7 +5,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG SECRETS_FILE=tests/.secrets
 ARG CONFIG_FILE=tests/.env.docker
 ARG GO_LIBRARY=go1.21.13.linux-${TARGETARCH}.tar.gz
-ARG MC_FOLDER=linux-${TARGETARCH}
 
 ENV TZ=Etc/UTC
 WORKDIR /tmp
@@ -24,12 +23,8 @@ RUN case "$TARGETARCH" in \
 # Install AWS cli
 RUN . ./arch.env && curl "https://awscli.amazonaws.com/awscli-exe-linux-${DOWNLOAD_ARCH}.zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install
 
-# Install mc
-RUN curl -fL https://dl.min.io/client/mc/release/${MC_FOLDER}/mc \
-  --create-dirs \
-  -o /usr/local/minio-binaries/mc && \
-chmod -R 755 /usr/local/minio-binaries
-ENV PATH=/usr/local/minio-binaries:${PATH}
+# mc is not installed: dl.min.io no longer serves the MinIO client binaries
+# (HTTP 410), so the mc test suites are not run.
 
 # Download Go 1.21 (adjust the version and platform as needed)
 RUN wget https://golang.org/dl/${GO_LIBRARY}
@@ -92,4 +87,4 @@ ENV WORKSPACE=.
 ENV VERSITYGW_TEST_ENV=/home/tester/config/.env
 
 ENTRYPOINT ["tests/run.sh"]
-CMD ["s3api,s3,s3cmd,mc,rest"]
+CMD ["s3api,s3,s3cmd,rest"]
