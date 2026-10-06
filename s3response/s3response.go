@@ -111,6 +111,10 @@ const (
 	ObjectAttributesObjectParts  ObjectAttributes = "ObjectParts"
 	ObjectAttributesStorageClass ObjectAttributes = "StorageClass"
 	ObjectAttributesObjectSize   ObjectAttributes = "ObjectSize"
+	// ObjectAttributesBlake3 is an extension to the S3 API: the object's
+	// BLAKE3 digest and the tree a client verifies ranged reads against
+	// (see Blake3Tree). AWS rejects the name with InvalidArgument.
+	ObjectAttributesBlake3 ObjectAttributes = "Blake3"
 )
 
 func (o ObjectAttributes) IsValid() bool {
@@ -118,7 +122,8 @@ func (o ObjectAttributes) IsValid() bool {
 		o == ObjectAttributesEtag ||
 		o == ObjectAttributesObjectParts ||
 		o == ObjectAttributesObjectSize ||
-		o == ObjectAttributesStorageClass
+		o == ObjectAttributesStorageClass ||
+		o == ObjectAttributesBlake3
 }
 
 type GetObjectAttributesResponse struct {
@@ -127,11 +132,25 @@ type GetObjectAttributesResponse struct {
 	StorageClass types.StorageClass `xml:",omitempty"`
 	ObjectParts  *ObjectParts
 	Checksum     *types.Checksum
+	Blake3       *Blake3Tree `xml:"Blake3,omitempty"`
 
 	// Not included in the response body
 	VersionId    *string
 	LastModified *time.Time
 	DeleteMarker *bool
+}
+
+// Blake3Tree is the Blake3 object attribute: the object's BLAKE3 digest as a
+// CID (version 1, raw codec, blake3 multihash) and the chaining values of its
+// group-aligned blocks, from which a client verifies a ranged read. Group is
+// the block size as a base-2 exponent of bytes; Leaves holds one 32-byte
+// chaining value per block in order, base64-encoded like the checksums in
+// ObjectParts. A backend that records no tree for an object leaves the field
+// nil and the element is omitted.
+type Blake3Tree struct {
+	CID    string   `xml:"CID"`
+	Group  uint8    `xml:"Group"`
+	Leaves []string `xml:"Leaves>Leaf"`
 }
 
 type ObjectParts struct {

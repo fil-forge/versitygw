@@ -608,6 +608,37 @@ func TestS3ApiController_GetObjectAttributes(t *testing.T) {
 			},
 		},
 		{
+			name: "Blake3 attribute accepted",
+			input: testInput{
+				locals: defaultLocals,
+				beRes: s3response.GetObjectAttributesResponse{
+					DeleteMarker: &delMarker,
+					LastModified: &lastModTime,
+					VersionId:    utils.GetStringPtr("versionId"),
+					ETag:         &etag,
+					Blake3:       &s3response.Blake3Tree{CID: "bafkr4i", Group: 22, Leaves: []string{"AA=="}},
+				},
+				headers: map[string]string{
+					"X-Amz-Object-Attributes": "Blake3",
+				},
+			},
+			output: testOutput{
+				response: &Response{
+					Headers: map[string]*string{
+						"x-amz-version-id":    utils.GetStringPtr("versionId"),
+						"x-amz-delete-marker": utils.GetStringPtr("true"),
+						"Last-Modified":       &timeFormatted,
+					},
+					Data: s3response.GetObjectAttributesResponse{
+						Blake3: &s3response.Blake3Tree{CID: "bafkr4i", Group: 22, Leaves: []string{"AA=="}},
+					},
+					MetaOpts: &MetaOptions{
+						BucketOwner: "root",
+					},
+				},
+			},
+		},
+		{
 			name: "successful response",
 			input: testInput{
 				locals: defaultLocals,
