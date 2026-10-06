@@ -341,6 +341,13 @@ func (c S3ApiController) GetObjectAttributes(ctx fiber.Ctx) (*Response, error) {
 		}, err
 	}
 
+	// The requested attributes go to the backend too, so one that is costly
+	// to produce (the Blake3 outboard) is built only when asked for; the
+	// filter below still decides what the response carries.
+	requested := make([]types.ObjectAttributes, 0, len(attrs))
+	for a := range attrs {
+		requested = append(requested, types.ObjectAttributes(a))
+	}
 	res, err := c.be.GetObjectAttributes(ctx.RequestCtx(),
 		&s3.GetObjectAttributesInput{
 			Bucket:           &bucket,
@@ -348,6 +355,7 @@ func (c S3ApiController) GetObjectAttributes(ctx fiber.Ctx) (*Response, error) {
 			PartNumberMarker: &partNumberMarker,
 			MaxParts:         maxParts,
 			VersionId:        &versionId,
+			ObjectAttributes: requested,
 		})
 	if err != nil {
 		headers := map[string]*string{
