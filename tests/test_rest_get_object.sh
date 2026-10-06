@@ -102,7 +102,7 @@ source ./tests/setup.sh
 # tags: curl,GetObject,partNumber,range,Content-Range
 @test "REST - GetObject - part number 1 returns 206, Content-Range header" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2074"
+    skip "https://github.com/fil-forge/versitygw/issues/2074"
   fi
   run setup_bucket_and_file_v3 "$BUCKET_ONE_NAME"
     assert_success
@@ -119,7 +119,7 @@ source ./tests/setup.sh
 # tags: curl,GetObject,invalid-header,response-headers
 @test "REST - GetObject - response query - invalid response type" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2075"
+    skip "https://github.com/fil-forge/versitygw/issues/2075"
   fi
   run setup_bucket_and_file_v3 "$BUCKET_ONE_NAME"
   assert_success

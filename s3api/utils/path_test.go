@@ -17,7 +17,7 @@ package utils_test
 import (
 	"testing"
 
-	"github.com/versity/versitygw/s3api/utils"
+	"github.com/fil-forge/versitygw/s3api/utils"
 )
 
 func TestIsObjectNameValid(t *testing.T) {

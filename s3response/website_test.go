@@ -18,7 +18,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 func TestWebsiteConfiguration_Validate(t *testing.T) {

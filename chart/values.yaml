@@ -17,7 +17,7 @@ replicaCount: 1
 strategy: {}
 
 # This section defines which image to use and how to pull it.
-# Find all available tags / releases at: https://github.com/versity/versitygw/pkgs/container/versitygw
+# Find all available tags / releases at: https://github.com/fil-forge/versitygw/pkgs/container/versitygw
 image:
   repository: ghcr.io/versity/versitygw
   tag: "latest"
@@ -266,7 +266,7 @@ iam:
 # Extra environment variables to pass to the container.
 # Use this to configure advanced options not covered above (e.g. event notifications,
 # LDAP IAM, S3 proxy backend credentials, StatsD metrics, etc.).
-# Refer to https://github.com/versity/versitygw#configuration for the full list.
+# Refer to https://github.com/fil-forge/versitygw#configuration for the full list.
 # Example:
 #   extraEnv:
 #     - name: VGW_EVENT_KAFKA_URL

@@ -55,7 +55,7 @@ import (
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"github.com/cespare/xxhash/v2"
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3err"
 	"github.com/zeebo/xxh3"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/semaphore"

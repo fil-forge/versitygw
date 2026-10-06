@@ -24,7 +24,7 @@ source ./tests/drivers/get_object_attributes/get_object_attributes_rest.sh
 # tags: curl,GetObjectAttributes,attributes,x-amz-object-attributes,multipart
 @test "REST - get object attributes" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1001"
+    skip "https://github.com/fil-forge/versitygw/issues/1001"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -51,7 +51,7 @@ source ./tests/drivers/get_object_attributes/get_object_attributes_rest.sh
 # tags: curl,GetObjectAttributes,attributes,x-amz-object-attributes,invalid-header
 @test "REST - attributes - invalid param" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1001"
+    skip "https://github.com/fil-forge/versitygw/issues/1001"
   fi
 
   run get_bucket_name "$BUCKET_ONE_NAME"

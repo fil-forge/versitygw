@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 type chunkedReader struct {

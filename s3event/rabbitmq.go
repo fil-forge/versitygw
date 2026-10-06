@@ -22,10 +22,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fil-forge/versitygw/s3response"
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/versity/versitygw/s3response"
 )
 
 // RabbitmqEventSender sends S3 events to a RabbitMQ exchange/queue.

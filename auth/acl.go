@@ -24,9 +24,9 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/versity/versitygw/backend"
-	"github.com/versity/versitygw/debuglogger"
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/backend"
+	"github.com/fil-forge/versitygw/debuglogger"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 type ACL struct {

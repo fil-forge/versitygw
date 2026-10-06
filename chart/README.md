@@ -6,7 +6,7 @@ Versity is an S3-compatible storage gateway that proxies S3 API requests to a va
 
 ## Overview
 
-[versitygw](https://github.com/versity/versitygw) is an S3-compatible gateway that fronts POSIX filesystems, ScoutFS, S3, Azure Blob Storage, or custom plugin backends. This chart deploys versitygw on Kubernetes as a Deployment and Service, with optional support for TLS termination, Ingress, HTTPRoutes, certificate provisioning (via `cert-manager` CRDs), IAM, an Admin API, a browser-based WebUI, persistent storage, and NetworkPolicy.
+[versitygw](https://github.com/fil-forge/versitygw) is an S3-compatible gateway that fronts POSIX filesystems, ScoutFS, S3, Azure Blob Storage, or custom plugin backends. This chart deploys versitygw on Kubernetes as a Deployment and Service, with optional support for TLS termination, Ingress, HTTPRoutes, certificate provisioning (via `cert-manager` CRDs), IAM, an Admin API, a browser-based WebUI, persistent storage, and NetworkPolicy.
 
 ## Prerequisites
 
@@ -16,7 +16,7 @@ Versity is an S3-compatible storage gateway that proxies S3 API requests to a va
 
 ## Installation
 
-Basic installation (single user mode) with [posix backend](https://github.com/versity/versitygw/wiki/POSIX-Backend):
+Basic installation (single user mode) with [posix backend](https://github.com/fil-forge/versitygw/wiki/POSIX-Backend):
 
 ```bash
 helm install my-versitygw oci://ghcr.io/versity/versitygw/charts/versitygw \
@@ -59,7 +59,7 @@ helm upgrade my-versitygw oci://ghcr.io/versity/versitygw/charts/versitygw \
   --version 0.2.0
 ```
 
-You can find the list of available Helm chart versions in the [GitHub packages page](https://github.com/versity/versitygw/pkgs/container/versitygw%2Fcharts%2Fversitygw/versions?filters%5Bversion_type%5D=tagged).
+You can find the list of available Helm chart versions in the [GitHub packages page](https://github.com/fil-forge/versitygw/pkgs/container/versitygw%2Fcharts%2Fversitygw/versions?filters%5Bversion_type%5D=tagged).
 
 ## Backend Storage
 
@@ -67,11 +67,11 @@ The `gateway.backend.type` value selects the storage backend. Use `gateway.backe
 
 | Backend | Description | Example `gateway.backend.args` |
 |---------|-------------|--------------------------------|
-| [posix](https://github.com/versity/versitygw/wiki/POSIX-Backend) | POSIX-compatible local or network filesystem (default) | `/mnt/data` |
-| [scoutfs](https://github.com/versity/versitygw/wiki/ScoutFS-Backend) | [ScoutFS](https://scoutfs.org/) high-performance filesystem | `/mnt/scoutfs` |
-| [s3](https://github.com/versity/versitygw/wiki/S3-Backend) | Proxy to an existing S3-compatible object store | `--access KEY --secret SECRET --endpoint https://s3.example.com` |
-| [azure](https://github.com/versity/versitygw/wiki/AzureBlob-Backend) | Azure Blob Storage | `--account myaccount --key mykey` |
-| [plugin](https://github.com/versity/versitygw/wiki/Plugin-Backend) | Custom backend via shared library plugin | `/path/to/plugin.so` |
+| [posix](https://github.com/fil-forge/versitygw/wiki/POSIX-Backend) | POSIX-compatible local or network filesystem (default) | `/mnt/data` |
+| [scoutfs](https://github.com/fil-forge/versitygw/wiki/ScoutFS-Backend) | [ScoutFS](https://scoutfs.org/) high-performance filesystem | `/mnt/scoutfs` |
+| [s3](https://github.com/fil-forge/versitygw/wiki/S3-Backend) | Proxy to an existing S3-compatible object store | `--access KEY --secret SECRET --endpoint https://s3.example.com` |
+| [azure](https://github.com/fil-forge/versitygw/wiki/AzureBlob-Backend) | Azure Blob Storage | `--account myaccount --key mykey` |
+| [plugin](https://github.com/fil-forge/versitygw/wiki/Plugin-Backend) | Custom backend via shared library plugin | `/path/to/plugin.so` |
 
 ## Optional Features
 

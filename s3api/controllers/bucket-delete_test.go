@@ -19,7 +19,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 func TestS3ApiController_DeleteBucketTagging(t *testing.T) {

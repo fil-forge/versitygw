@@ -25,7 +25,7 @@ source ./tests/setup.sh
 # tags: curl,ListMultipartUploads,multipart
 @test "REST - ListMultipartUploads - Initiator and Owner data shown" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2142"
+    skip "https://github.com/fil-forge/versitygw/issues/2142"
   fi
   run setup_bucket_and_file_v3 "$BUCKET_ONE_NAME"
   assert_success
@@ -51,7 +51,7 @@ source ./tests/setup.sh
 # tags: curl,ListMultipartUploads,multipart,uploadId,next-key-marker,next-upload-id-marker
 @test "REST - ListMultipartUploads - NextKeyMarker and NextUploadIdMarker set to last item" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2144"
+    skip "https://github.com/fil-forge/versitygw/issues/2144"
   fi
   run setup_bucket_and_files_v3 "$BUCKET_ONE_NAME" 2
   assert_success
@@ -82,7 +82,7 @@ source ./tests/setup.sh
 # tags: curl,ListMultipartUploads,multipart,uploadId,key-marker
 @test "REST - ListMultipartUploads - uploadId and key combo work" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2149"
+    skip "https://github.com/fil-forge/versitygw/issues/2149"
   fi
   run setup_bucket_and_files_v3 "$BUCKET_ONE_NAME" 2
   assert_success
@@ -117,7 +117,7 @@ source ./tests/setup.sh
 # tags: curl,ListMultipartUploads,multipart,uploadId
 @test "REST - ListMultipartUploads - uploadId without key should be ignored" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2150"
+    skip "https://github.com/fil-forge/versitygw/issues/2150"
   fi
   run setup_bucket_and_file_v3 "$BUCKET_ONE_NAME"
   assert_success
@@ -171,7 +171,7 @@ source ./tests/setup.sh
 # tags: curl,ListMultipartUploads,multipart,encoding-type
 @test "REST - ListMultipartUploads - encoding type" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2156"
+    skip "https://github.com/fil-forge/versitygw/issues/2156"
   fi
   run setup_bucket_v3 "$BUCKET_ONE_NAME"
   assert_success
@@ -197,7 +197,7 @@ source ./tests/setup.sh
 # tags: curl,ListMultipartUploads,multipart,encoding-type,invalid-query
 @test "REST - ListMultipartUploads - invalid encoding type" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2156"
+    skip "https://github.com/fil-forge/versitygw/issues/2156"
   fi
   run setup_bucket_and_file_v3 "$BUCKET_ONE_NAME"
   assert_success
@@ -216,7 +216,7 @@ source ./tests/setup.sh
 # tags: curl,ListMultipartUploads,multipart,uploadId,invalid-query
 @test "REST - ListMultipartUploads - uploads/uploadId combo" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2155"
+    skip "https://github.com/fil-forge/versitygw/issues/2155"
   fi
   run setup_bucket_and_file_v3 "$BUCKET_ONE_NAME"
   assert_success

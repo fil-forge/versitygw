@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/versity/versitygw/tests/rest_scripts/logger"
+	"github.com/fil-forge/versitygw/tests/rest_scripts/logger"
 )
 
 type OpenSSLCommand struct {

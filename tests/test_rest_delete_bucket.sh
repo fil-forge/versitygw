@@ -159,7 +159,7 @@ source ./tests/drivers/put_object/put_object_rest.sh
 # tags: curl,DeleteBucket,PutObject
 @test "REST - DeleteBucket - BucketNotEmpty error contains bucket that is not empty" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1780"
+    skip "https://github.com/fil-forge/versitygw/issues/1780"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success

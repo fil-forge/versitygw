@@ -71,7 +71,7 @@ source ./tests/util/util_time.sh
 
 @test "ListObjectVersions - invalid encoding" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2169"
+    skip "https://github.com/fil-forge/versitygw/issues/2169"
   fi
   run objects_versions_invalid_encoding "versions"
   assert_success
@@ -79,7 +79,7 @@ source ./tests/util/util_time.sh
 
 @test "ListObjectVersions - encoding success" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2169"
+    skip "https://github.com/fil-forge/versitygw/issues/2169"
   fi
   run objects_versions_encoding_success "versions" "ListVersionsResult" "Version"
   assert_success
@@ -87,7 +87,7 @@ source ./tests/util/util_time.sh
 
 @test "ListObjectVersions - version ID marker w/o key marker" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2174"
+    skip "https://github.com/fil-forge/versitygw/issues/2174"
   fi
   run setup_bucket_and_add_files_v3 "$BUCKET_ONE_NAME" "2"
   assert_success
@@ -100,7 +100,7 @@ source ./tests/util/util_time.sh
 
 @test "ListObjectVersions - key-marker set to first key returns proper values" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2178"
+    skip "https://github.com/fil-forge/versitygw/issues/2178"
   fi
   run setup_bucket_and_add_files_v3 "$BUCKET_ONE_NAME" "2"
   assert_success
@@ -126,7 +126,7 @@ source ./tests/util/util_time.sh
 
 @test "ListObjectVersions - same key, different versions" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2178"
+    skip "https://github.com/fil-forge/versitygw/issues/2178"
   fi
   run setup_bucket_and_add_file_v3 "$BUCKET_ONE_NAME"
   assert_success

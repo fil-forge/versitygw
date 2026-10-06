@@ -298,7 +298,7 @@ export RUN_USERS=true
 # tags: s3api, retention, object-lock, x-amz-bypass-governance-retention, invalid-header
 @test "s3api - --bypass-governance-retention w/o bucket w/object lock fails" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1218"
+    skip "https://github.com/fil-forge/versitygw/issues/1218"
   fi
   test_file="test_file"
   run setup_bucket_and_file "$BUCKET_ONE_NAME" "$test_file"

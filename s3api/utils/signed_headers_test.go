@@ -21,11 +21,11 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	v4 "github.com/fil-forge/versitygw/aws/signer/v4"
+	"github.com/fil-forge/versitygw/s3err"
 	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/require"
 	"github.com/valyala/fasthttp"
-	v4 "github.com/versity/versitygw/aws/signer/v4"
-	"github.com/versity/versitygw/s3err"
 )
 
 const signedHeadersTestRegion = "us-east-1"

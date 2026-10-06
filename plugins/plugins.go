@@ -14,7 +14,7 @@
 
 package plugins
 
-import "github.com/versity/versitygw/backend"
+import "github.com/fil-forge/versitygw/backend"
 
 // BackendPlugin defines an interface for creating backend
 // implementation instances.
