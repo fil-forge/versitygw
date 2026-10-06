@@ -7,16 +7,16 @@ import (
 )
 
 // TestBlake3TreeXML pins the element shape the Blake3 object attribute
-// documents: CID, Group and the base64 Outboard.
+// documents: CID, ChunkLog and the base64 Outboard.
 func TestBlake3TreeXML(t *testing.T) {
 	res := GetObjectAttributesResponse{
-		Blake3: &Blake3Tree{CID: "bafkr4iexample", Group: 22, Outboard: "AAAAAAAAAAA="},
+		Blake3: &Blake3Tree{CID: "bafkr4iexample", ChunkLog: 12, Outboard: "AAAAAAAAAAA="},
 	}
 	out, err := xml.Marshal(res)
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "<Blake3><CID>bafkr4iexample</CID><Group>22</Group><Outboard>AAAAAAAAAAA=</Outboard></Blake3>"
+	want := "<Blake3><CID>bafkr4iexample</CID><ChunkLog>12</ChunkLog><Outboard>AAAAAAAAAAA=</Outboard></Blake3>"
 	if !strings.Contains(string(out), want) {
 		t.Fatalf("marshaled %s, want it to contain %s", out, want)
 	}
