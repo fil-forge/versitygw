@@ -135,10 +135,17 @@ type GetObjectAttributesResponse struct {
 }
 
 type ObjectParts struct {
-	PartNumberMarker     int
-	NextPartNumberMarker int
-	MaxParts             int
-	IsTruncated          bool
+	// PartsCount is the object's total multipart part count (AWS <PartsCount>,
+	// the SDK's TotalPartsCount). Emitted for every completed multipart object.
+	// The pagination fields and per-part list below are populated only when the
+	// parts carry checksums; they are pointers so a checksummed object emits the
+	// zero values (PartNumberMarker 0, IsTruncated false) while a non-checksummed
+	// object omits them entirely, matching AWS in both cases.
+	PartsCount           int                `xml:"PartsCount,omitempty"`
+	PartNumberMarker     *int               `xml:"PartNumberMarker,omitempty"`
+	NextPartNumberMarker *int               `xml:"NextPartNumberMarker,omitempty"`
+	MaxParts             *int               `xml:"MaxParts,omitempty"`
+	IsTruncated          *bool              `xml:"IsTruncated,omitempty"`
 	Parts                []types.ObjectPart `xml:"Part"`
 }
 
@@ -292,6 +299,7 @@ func (t *Tagging) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 
 type DeleteObjects struct {
 	Objects []types.ObjectIdentifier `xml:"Object"`
+	Quiet   bool                     `xml:"Quiet"`
 }
 
 type DeleteResult struct {
@@ -592,6 +600,7 @@ type PutObjectInput struct {
 	ChecksumXXHASH128       *string
 	ContentMD5              *string
 	ExpectedBucketOwner     *string
+	ACL                     types.ObjectCannedACL
 	GrantFullControl        *string
 	GrantRead               *string
 	GrantReadACP            *string

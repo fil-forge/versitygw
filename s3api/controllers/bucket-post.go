@@ -85,6 +85,7 @@ func (c S3ApiController) DeleteObjects(ctx fiber.Ctx) (*Response, error) {
 			Bucket: &bucket,
 			Delete: &types.Delete{
 				Objects: dObj.Objects,
+				Quiet:   &dObj.Quiet,
 			},
 		})
 	return &Response{

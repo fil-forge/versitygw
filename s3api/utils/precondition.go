@@ -102,28 +102,21 @@ func ParsePreconditionDateHeader(date string) *time.Time {
 	if date == "" {
 		return nil
 	}
-	// try to parse as RFC1123
-	parsed, err := time.Parse(time.RFC1123, date)
-	if err == nil {
-		// ignore future dates
+	// A date in the future is ignored: S3 does not evaluate a future
+	// If-Modified-Since / If-Unmodified-Since (verified against AWS S3 — a
+	// future If-Modified-Since on an unmodified object returns 200, not 304).
+	if parsed, err := time.Parse(time.RFC1123, date); err == nil {
 		if parsed.After(time.Now()) {
 			return nil
 		}
-
 		return &parsed
 	}
-
-	// try to parse as RFC3339
-	parsed, err = time.Parse(time.RFC3339, date)
-	if err == nil {
-		// ignore future dates
+	if parsed, err := time.Parse(time.RFC3339, date); err == nil {
 		if parsed.After(time.Now()) {
 			return nil
 		}
-
 		return &parsed
 	}
-
 	return nil
 }
 

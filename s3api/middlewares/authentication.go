@@ -51,6 +51,15 @@ func VerifyV4Signature(root RootUserConfig, iam auth.IAMService, region string, 
 			return nil
 		}
 
+		// A present but malformed Authorization header is rejected before the
+		// date check so it surfaces as InvalidArgument (AWS) rather than the
+		// missing-date AccessDenied.
+		if hdr := ctx.Get("Authorization"); hdr != "" {
+			if _, err := utils.ParseAuthorization(hdr); err != nil {
+				return err
+			}
+		}
+
 		// Check X-Amz-Date header
 		date := ctx.Get("X-Amz-Date")
 		if date == "" {

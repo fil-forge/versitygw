@@ -345,6 +345,14 @@ func WithDisableACL() Option {
 	return func(s *S3ApiServer) { s.Router.disableACL = true }
 }
 
+// WithDisableObjNameTraversalCheck disables the path-traversal rejection in
+// object-name validation. Backends that store keys opaquely (not as filesystem
+// paths) set this so keys like "../file.txt" are accepted and stored literally,
+// matching AWS. The empty/"."/".."/"/" and control-character rejections stay on.
+func WithDisableObjNameTraversalCheck() Option {
+	return func(s *S3ApiServer) { s.Router.disableObjNameTraversal = true }
+}
+
 // WithOnListen registers a callback that is invoked once the server is bound
 // and ready to accept requests. It is called from the fiber OnListen hook,
 // which fires immediately before the server begins serving the first

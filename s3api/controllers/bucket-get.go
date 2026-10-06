@@ -15,12 +15,14 @@
 package controllers
 
 import (
+	"net/url"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/s3api/utils"
+	"github.com/fil-forge/versitygw/s3err"
 	"github.com/fil-forge/versitygw/s3response"
 	"github.com/gofiber/fiber/v3"
 )
@@ -549,6 +551,21 @@ func (c S3ApiController) ListMultipartUploads(ctx fiber.Ctx) (*Response, error) 
 	}, err
 }
 
+// urlEncodeListKey applies EncodingType=url encoding to a list-response key or
+// prefix: form-style escaping (space -> "+", "+" -> "%2B", ...) with "/" left
+// intact, matching AWS.
+func urlEncodeListKey(s string) string {
+	return strings.ReplaceAll(url.QueryEscape(s), "%2F", "/")
+}
+
+func encStrPtr(p *string) *string {
+	if p == nil {
+		return nil
+	}
+	v := urlEncodeListKey(*p)
+	return &v
+}
+
 func (c S3ApiController) ListObjectsV2(ctx fiber.Ctx) (*Response, error) {
 	// url values
 	bucket := ctx.Params("bucket")
@@ -595,6 +612,17 @@ func (c S3ApiController) ListObjectsV2(ctx fiber.Ctx) (*Response, error) {
 		}, err
 	}
 
+	// A present-but-empty continuation-token is invalid, not absent: AWS rejects
+	// it with InvalidArgument. ctx.Query collapses "absent" and "present, empty",
+	// so check the raw query args for the key's presence.
+	if cToken == "" && ctx.Request().URI().QueryArgs().Has("continuation-token") {
+		return &Response{
+			MetaOpts: &MetaOptions{
+				BucketOwner: parsedAcl.Owner,
+			},
+		}, s3err.GetInvalidArgumentErr(s3err.InvalidArgContinuationToken, "")
+	}
+
 	res, err := c.be.ListObjectsV2(ctx.RequestCtx(),
 		&s3.ListObjectsV2Input{
 			Bucket:            &bucket,
@@ -611,6 +639,19 @@ func (c S3ApiController) ListObjectsV2(ctx fiber.Ctx) (*Response, error) {
 				BucketOwner: parsedAcl.Owner,
 			},
 		}, err
+	}
+
+	if strings.EqualFold(ctx.Query("encoding-type"), "url") {
+		res.EncodingType = types.EncodingTypeUrl
+		res.Prefix = encStrPtr(res.Prefix)
+		res.Delimiter = encStrPtr(res.Delimiter)
+		res.StartAfter = encStrPtr(res.StartAfter)
+		for i := range res.Contents {
+			res.Contents[i].Key = encStrPtr(res.Contents[i].Key)
+		}
+		for i := range res.CommonPrefixes {
+			res.CommonPrefixes[i].Prefix = encStrPtr(res.CommonPrefixes[i].Prefix)
+		}
 	}
 
 	return &Response{
@@ -683,6 +724,20 @@ func (c S3ApiController) ListObjects(ctx fiber.Ctx) (*Response, error) {
 				BucketOwner: parsedAcl.Owner,
 			},
 		}, err
+	}
+
+	if strings.EqualFold(ctx.Query("encoding-type"), "url") {
+		res.EncodingType = types.EncodingTypeUrl
+		res.Prefix = encStrPtr(res.Prefix)
+		res.Delimiter = encStrPtr(res.Delimiter)
+		res.Marker = encStrPtr(res.Marker)
+		res.NextMarker = encStrPtr(res.NextMarker)
+		for i := range res.Contents {
+			res.Contents[i].Key = encStrPtr(res.Contents[i].Key)
+		}
+		for i := range res.CommonPrefixes {
+			res.CommonPrefixes[i].Prefix = encStrPtr(res.CommonPrefixes[i].Prefix)
+		}
 	}
 
 	return &Response{

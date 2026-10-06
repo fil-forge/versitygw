@@ -1303,6 +1303,59 @@ func TestS3ApiController_PutObject(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "suspended bucket null version omits x-amz-version-id",
+			input: testInput{
+				locals: map[utils.ContextKey]any{
+					utils.ContextKeyIsRoot: true,
+					utils.ContextKeyParsedAcl: auth.ACL{
+						Owner: "root",
+					},
+					utils.ContextKeyAccount: auth.Account{
+						Access: "root",
+						Role:   auth.RoleAdmin,
+					},
+					utils.ContextKeyBodyReader: strings.NewReader("something"),
+				},
+				extraMockErr: s3err.GetAPIError(s3err.ErrObjectLockConfigurationNotFound),
+				headers: map[string]string{
+					"Content-Length": "3",
+				},
+				body: []byte("aaa"),
+				beRes: s3response.PutObjectOutput{
+					ETag:      "ETag",
+					VersionID: "null",
+					Size:      &objSize,
+				},
+			},
+			output: testOutput{
+				response: &Response{
+					Headers: map[string]*string{
+						"ETag":                     utils.GetStringPtr("ETag"),
+						"x-amz-checksum-crc32":     nil,
+						"x-amz-checksum-crc32c":    nil,
+						"x-amz-checksum-crc64nvme": nil,
+						"x-amz-checksum-sha1":      nil,
+						"x-amz-checksum-sha256":    nil,
+						"x-amz-checksum-sha512":    nil,
+						"x-amz-checksum-md5":       nil,
+						"x-amz-checksum-xxhash64":  nil,
+						"x-amz-checksum-xxhash3":   nil,
+						"x-amz-checksum-xxhash128": nil,
+						"x-amz-checksum-type":      utils.GetStringPtr(""),
+						"x-amz-version-id":         nil,
+						"x-amz-object-size":        utils.ConvertToStringPtr(objSize),
+					},
+					MetaOpts: &MetaOptions{
+						BucketOwner:   "root",
+						ObjectETag:    utils.GetStringPtr("ETag"),
+						EventName:     s3event.EventObjectCreatedPut,
+						ContentLength: 3,
+						ObjectSize:    3,
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
