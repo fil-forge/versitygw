@@ -190,7 +190,10 @@ func (vt *VaultIAMService) reAuthIfNeeded(err error) error {
 }
 
 func (vt *VaultIAMService) CreateAccount(account Account) error {
-	if vt.rootAcc.Access == account.Access {
+	if err := validateNewAccount(account); err != nil {
+		return err
+	}
+	if isRootAccess(vt.rootAcc, account.Access) {
 		return ErrUserExists
 	}
 	_, err := vt.client.Secrets.KvV2Write(context.Background(),
@@ -237,7 +240,10 @@ func (vt *VaultIAMService) CreateAccount(account Account) error {
 }
 
 func (vt *VaultIAMService) GetUserAccount(access string) (Account, error) {
-	if vt.rootAcc.Access == access {
+	if access == "" {
+		return Account{}, ErrNoSuchUser
+	}
+	if isRootAccess(vt.rootAcc, access) {
 		return vt.rootAcc, nil
 	}
 	resp, err := vt.client.Secrets.KvV2Read(context.Background(),

@@ -28,6 +28,17 @@ helm install my-versitygw oci://ghcr.io/versity/versitygw/charts/versitygw \
 
 > **Production note:** Passing credentials via `--set` stores them in Helm's release history. For production deployments, create a Kubernetes Secret in advance and reference it with `auth.existingSecret=<secret-name>`. The Secret must contain the keys `rootAccessKeyId` and `rootSecretAccessKey`.
 
+Installation without a root account, with all users managed by the IAM backend:
+
+```bash
+helm install my-versitygw oci://ghcr.io/versity/versitygw/charts/versitygw \
+  --set iam.enabled=true \
+  --set gateway.backend.type=posix \
+  --set persistence.enabled=true
+```
+
+Leave `auth.existingSecret`, `auth.accessKey` and `auth.secretKey` empty and the chart neither creates the credentials Secret nor passes root credentials to the gateway. With the default internal IAM backend, provision an initial `RoleAdmin` account in the IAM store (or use an external IAM backend) before using the admin API, because a fresh rootless store has no account that can authenticate the first request.
+
 ## Upgrading
 
 The versioning of this Helm chart and of `versitygw` itself are currently not coupled to each other.

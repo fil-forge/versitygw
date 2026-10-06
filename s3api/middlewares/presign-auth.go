@@ -54,7 +54,7 @@ func VerifyPresignedV4Signature(root RootUserConfig, iam auth.IAMService, region
 			return err
 		}
 
-		utils.ContextKeyIsRoot.Set(ctx, authData.Access == root.Access)
+		utils.ContextKeyIsRoot.Set(ctx, root.matches(authData.Access))
 
 		account, err := acct.getAccount(ctx, authData.Access)
 		if err == auth.ErrNoSuchUser {

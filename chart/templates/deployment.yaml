@@ -4,6 +4,10 @@
     {{- fail "Multiple replicas with POSIX backend or Internal IAM require persistence.enabled=true to prevent data loss and inconsistency across pods. If using a stateless backend (e.g. S3, Azure) and external IAM, set persistence.enabled=false." }}
   {{- end }}
 {{- end }}
+{{- /* Without a root account the gateway needs an IAM backend to authenticate against */}}
+{{- if and (not (include "versitygw.rootCredentialsEnabled" .)) (not .Values.iam.enabled) }}
+  {{- fail "root credentials (auth.accessKey and auth.secretKey, or auth.existingSecret) are required unless iam.enabled=true" }}
+{{- end }}
 {{- if and .Values.persistence.enabled (not .Values.persistence.create) (not .Values.persistence.claimName) (not .Values.persistence.hostPath) }}
   {{- fail "persistence.claimName or persistence.hostPath is required when persistence.create is false" }}
 {{- end }}
@@ -31,7 +35,7 @@ spec:
   template:
     metadata:
       annotations:
-        {{- if not .Values.auth.existingSecret }}
+        {{- if and (include "versitygw.rootCredentialsEnabled" .) (not .Values.auth.existingSecret) }}
         checksum/credentials: {{ cat .Release.Name .Values.auth.accessKey .Values.auth.secretKey | sha256sum | trunc 12 }}
         {{- end }}
       {{- with .Values.podAnnotations }}
@@ -61,6 +65,7 @@ spec:
               value: {{ .Values.gateway.backend.type | quote }}
             - name: VGW_BACKEND_ARGS
               value: {{ .Values.gateway.backend.args | quote }}
+            {{- if include "versitygw.rootCredentialsEnabled" . }}
             # Root credentials — sourced from a Kubernetes Secret
             - name: ROOT_ACCESS_KEY_ID
               valueFrom:
@@ -72,6 +77,7 @@ spec:
                 secretKeyRef:
                   name: {{ include "versitygw.credentialsSecretName" . }}
                   key: rootSecretAccessKey
+            {{- end }}
             # Gateway server settings
             - name: VGW_PORT
               value: ":{{ .Values.gateway.port }}"

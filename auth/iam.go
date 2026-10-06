@@ -208,3 +208,20 @@ func New(o *Opts) (IAMService, error) {
 		time.Duration(o.CacheTTL)*time.Second,
 		time.Duration(o.CachePrune)*time.Second), nil
 }
+
+// isRootAccess reports whether access names the root account root. A zero
+// root account (the gateway running without one) matches nothing, so an
+// empty access key can never resolve to it.
+func isRootAccess(root Account, access string) bool {
+	return root.Access != "" && root.Secret != "" && access == root.Access
+}
+
+// validateNewAccount rejects an account no request could ever authenticate
+// as: the auth middlewares refuse an empty access key before any IAM lookup,
+// so persisting one would only create an unusable entry.
+func validateNewAccount(account Account) error {
+	if account.Access == "" {
+		return s3err.GetAPIError(s3err.ErrAdminMissingUserAcess)
+	}
+	return nil
+}

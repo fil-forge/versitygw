@@ -70,6 +70,7 @@ func TestPrincipals_ToSlice(t *testing.T) {
 func TestPrincipals_Validate(t *testing.T) {
 	iamSingle := NewIAMServiceSingle(Account{
 		Access: "user1",
+		Secret: "secret",
 	})
 	tests := []struct {
 		name       string

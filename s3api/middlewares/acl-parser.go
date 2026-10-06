@@ -38,9 +38,13 @@ func ParseAcl(be backend.Backend) fiber.Handler {
 			return err
 		}
 
-		// if owner is not set, set default owner to root account
+		// An ACL without a stored owner belongs to the root account. Without
+		// a root account it has no owner: only admin-role accounts pass the
+		// owner checks that follow, and no expected-bucket-owner can match.
 		if parsedAcl.Owner == "" {
-			parsedAcl.Owner = utils.ContextKeyRootAccessKey.Get(ctx).(string)
+			if root, _ := utils.ContextKeyRootAccessKey.Get(ctx).(string); root != "" {
+				parsedAcl.Owner = root
+			}
 		}
 
 		// if expected bucket owner doesn't match the bucket owner

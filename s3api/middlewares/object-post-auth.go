@@ -175,7 +175,7 @@ func AuthorizePostObject(root RootUserConfig, iam auth.IAMService, region string
 			}
 
 			utils.ContextKeyAccount.Set(ctx, account)
-			utils.ContextKeyIsRoot.Set(ctx, account.Access == root.Access)
+			utils.ContextKeyIsRoot.Set(ctx, root.matches(account.Access))
 
 			expectedSig, err := utils.SignPostPolicy(policyB64, creds.Date, region, signingCred(account))
 			if err != nil {
