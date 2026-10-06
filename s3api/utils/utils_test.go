@@ -618,7 +618,7 @@ func TestFilterObjectAttributes(t *testing.T) {
 				},
 				output: s3response.GetObjectAttributesResponse{
 					ETag:   &etag,
-					Blake3: &s3response.Blake3Tree{CID: "bafkr4i", Group: 22, Outboard: "AAAAAAAAAAA="},
+					Blake3: &s3response.Blake3Tree{CID: "bafkr4i", ChunkLog: 12, Outboard: "AAAAAAAAAAA="},
 				},
 			},
 			want: s3response.GetObjectAttributesResponse{ETag: &etag},
@@ -631,11 +631,11 @@ func TestFilterObjectAttributes(t *testing.T) {
 				},
 				output: s3response.GetObjectAttributesResponse{
 					ETag:   &etag,
-					Blake3: &s3response.Blake3Tree{CID: "bafkr4i", Group: 22, Outboard: "AAAAAAAAAAA="},
+					Blake3: &s3response.Blake3Tree{CID: "bafkr4i", ChunkLog: 12, Outboard: "AAAAAAAAAAA="},
 				},
 			},
 			want: s3response.GetObjectAttributesResponse{
-				Blake3: &s3response.Blake3Tree{CID: "bafkr4i", Group: 22, Outboard: "AAAAAAAAAAA="},
+				Blake3: &s3response.Blake3Tree{CID: "bafkr4i", ChunkLog: 12, Outboard: "AAAAAAAAAAA="},
 			},
 		},
 		{

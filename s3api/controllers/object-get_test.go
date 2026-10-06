@@ -616,7 +616,7 @@ func TestS3ApiController_GetObjectAttributes(t *testing.T) {
 					LastModified: &lastModTime,
 					VersionId:    utils.GetStringPtr("versionId"),
 					ETag:         &etag,
-					Blake3:       &s3response.Blake3Tree{CID: "bafkr4i", Group: 22, Outboard: "AAAAAAAAAAA="},
+					Blake3:       &s3response.Blake3Tree{CID: "bafkr4i", ChunkLog: 12, Outboard: "AAAAAAAAAAA="},
 				},
 				headers: map[string]string{
 					"X-Amz-Object-Attributes": "Blake3",
@@ -630,7 +630,7 @@ func TestS3ApiController_GetObjectAttributes(t *testing.T) {
 						"Last-Modified":       &timeFormatted,
 					},
 					Data: s3response.GetObjectAttributesResponse{
-						Blake3: &s3response.Blake3Tree{CID: "bafkr4i", Group: 22, Outboard: "AAAAAAAAAAA="},
+						Blake3: &s3response.Blake3Tree{CID: "bafkr4i", ChunkLog: 12, Outboard: "AAAAAAAAAAA="},
 					},
 					MetaOpts: &MetaOptions{
 						BucketOwner: "root",
