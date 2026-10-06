@@ -90,8 +90,8 @@ func VerifyPresignedV4Signature(root RootUserConfig, iam auth.IAMService, region
 			}
 			// the upload limit for big data actions: PutObject, UploadPart
 			// is 5gb. If the size exceeds the limit, return 'EntityTooLarge' err
-			if contentLength > maxObjSizeLimit {
-				return s3err.GetEntityTooLargeErr(contentLength, maxObjSizeLimit)
+			if contentLength > utils.MaxObjSizeLimit {
+				return s3err.GetEntityTooLargeErr(contentLength, utils.MaxObjSizeLimit)
 			}
 		}
 
