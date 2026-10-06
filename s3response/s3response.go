@@ -141,16 +141,19 @@ type GetObjectAttributesResponse struct {
 }
 
 // Blake3Tree is the Blake3 object attribute: the object's BLAKE3 digest as a
-// CID (version 1, raw codec, blake3 multihash) and the chaining values of its
-// group-aligned blocks, from which a client verifies a ranged read. Group is
-// the block size as a base-2 exponent of bytes; Leaves holds one 32-byte
-// chaining value per block in order, base64-encoded like the checksums in
-// ObjectParts. A backend that records no tree for an object leaves the field
+// CID (version 1, raw codec, blake3 multihash) and the Bao outboard a client
+// verifies ranged reads with. Group is the Bao block size as a base-2
+// exponent of bytes (a Bao library's chunk log is Group minus 10). Outboard
+// is the standard pre-order Bao outboard, base64-encoded: the object size as
+// 8 little-endian bytes, then the chaining-value pair of each parent node
+// above the block size, root first. A Bao library loads the CID's digest,
+// the block size and the outboard and verifies any block-aligned range of
+// the object. A backend that records no tree for an object leaves the field
 // nil and the element is omitted.
 type Blake3Tree struct {
-	CID    string   `xml:"CID"`
-	Group  uint8    `xml:"Group"`
-	Leaves []string `xml:"Leaves>Leaf"`
+	CID      string `xml:"CID"`
+	Group    uint8  `xml:"Group"`
+	Outboard string `xml:"Outboard"`
 }
 
 type ObjectParts struct {
