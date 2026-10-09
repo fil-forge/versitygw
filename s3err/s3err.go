@@ -138,6 +138,7 @@ const (
 	ErrInvalidRange
 	ErrInvalidURI
 	ErrObjectLockConfigurationNotFound
+	ErrServerSideEncryptionConfigurationNotFound
 	ErrNoSuchObjectLockConfiguration
 	ErrMissingObjectLockConfiguration
 	ErrMissingObjectLockConfigurationNoSpaces
@@ -485,6 +486,11 @@ var errorCodeResponse = map[ErrorCode]APIError{
 	ErrObjectLockConfigurationNotFound: {
 		Code:           "ObjectLockConfigurationNotFoundError",
 		Description:    "Object Lock configuration does not exist for this bucket.",
+		HTTPStatusCode: http.StatusNotFound,
+	},
+	ErrServerSideEncryptionConfigurationNotFound: {
+		Code:           "ServerSideEncryptionConfigurationNotFoundError",
+		Description:    "The server side encryption configuration was not found",
 		HTTPStatusCode: http.StatusNotFound,
 	},
 	ErrNoSuchObjectLockConfiguration: {

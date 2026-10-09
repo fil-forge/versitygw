@@ -188,6 +188,48 @@ func (c S3ApiController) PutBucketVersioning(ctx fiber.Ctx) (*Response, error) {
 	}, err
 }
 
+func (c S3ApiController) PutBucketEncryption(ctx fiber.Ctx) (*Response, error) {
+	bucket := ctx.Params("bucket")
+	parsedAcl := utils.ContextKeyParsedAcl.Get(ctx).(auth.ACL)
+	acct := utils.ContextKeyAccount.Get(ctx).(auth.Account)
+	isRoot := utils.ContextKeyIsRoot.Get(ctx).(bool)
+	isPublicBucket := utils.ContextKeyPublicBucket.IsSet(ctx)
+
+	if err := auth.VerifyAccess(ctx.RequestCtx(), c.be, auth.AccessOptions{
+		Readonly:        c.readonly,
+		Acl:             parsedAcl,
+		AclPermission:   auth.PermissionWrite,
+		IsRoot:          isRoot,
+		Acc:             acct,
+		Bucket:          bucket,
+		Actions:         []auth.Action{auth.PutEncryptionConfigurationAction},
+		IsPublicRequest: isPublicBucket,
+		DisableACL:      c.disableACL,
+	}); err != nil {
+		return &Response{
+			MetaOpts: &MetaOptions{
+				BucketOwner: parsedAcl.Owner,
+			},
+		}, err
+	}
+
+	config, err := utils.ParseServerSideEncryptionConfiguration(ctx.BodyRaw())
+	if err != nil {
+		return &Response{
+			MetaOpts: &MetaOptions{
+				BucketOwner: parsedAcl.Owner,
+			},
+		}, err
+	}
+
+	err = c.be.PutBucketEncryption(ctx.RequestCtx(), bucket, config)
+	return &Response{
+		MetaOpts: &MetaOptions{
+			BucketOwner: parsedAcl.Owner,
+		},
+	}, err
+}
+
 func (c S3ApiController) PutObjectLockConfiguration(ctx fiber.Ctx) (*Response, error) {
 	bucket := ctx.Params("bucket")
 	parsedAcl := utils.ContextKeyParsedAcl.Get(ctx).(auth.ACL)

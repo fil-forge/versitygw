@@ -315,17 +315,18 @@ func (c S3ApiController) UploadPart(ctx fiber.Ctx) (*Response, error) {
 	var headers map[string]*string
 	if err == nil {
 		headers = map[string]*string{
-			"ETag":                     res.ETag,
-			"x-amz-checksum-crc32":     res.ChecksumCRC32,
-			"x-amz-checksum-crc32c":    res.ChecksumCRC32C,
-			"x-amz-checksum-crc64nvme": res.ChecksumCRC64NVME,
-			"x-amz-checksum-sha1":      res.ChecksumSHA1,
-			"x-amz-checksum-sha256":    res.ChecksumSHA256,
-			"x-amz-checksum-sha512":    res.ChecksumSHA512,
-			"x-amz-checksum-md5":       res.ChecksumMD5,
-			"x-amz-checksum-xxhash64":  res.ChecksumXXHASH64,
-			"x-amz-checksum-xxhash3":   res.ChecksumXXHASH3,
-			"x-amz-checksum-xxhash128": res.ChecksumXXHASH128,
+			"ETag":                         res.ETag,
+			"x-amz-checksum-crc32":         res.ChecksumCRC32,
+			"x-amz-checksum-crc32c":        res.ChecksumCRC32C,
+			"x-amz-checksum-crc64nvme":     res.ChecksumCRC64NVME,
+			"x-amz-checksum-sha1":          res.ChecksumSHA1,
+			"x-amz-checksum-sha256":        res.ChecksumSHA256,
+			"x-amz-checksum-sha512":        res.ChecksumSHA512,
+			"x-amz-checksum-md5":           res.ChecksumMD5,
+			"x-amz-checksum-xxhash64":      res.ChecksumXXHASH64,
+			"x-amz-checksum-xxhash3":       res.ChecksumXXHASH3,
+			"x-amz-checksum-xxhash128":     res.ChecksumXXHASH128,
+			"x-amz-server-side-encryption": utils.ConvertToStringPtr(res.ServerSideEncryption),
 		}
 	}
 	return &Response{
@@ -416,9 +417,10 @@ func (c S3ApiController) UploadPartCopy(ctx fiber.Ctx) (*Response, error) {
 			ExpectedSourceBucketOwner:   &expectedSrcBucketOwnerUPC,
 		})
 	var headers map[string]*string
-	if err == nil && resp.CopySourceVersionId != "" {
+	if err == nil {
 		headers = map[string]*string{
-			"x-amz-copy-source-version-id": &resp.CopySourceVersionId,
+			"x-amz-copy-source-version-id": utils.GetStringPtr(resp.CopySourceVersionId),
+			"x-amz-server-side-encryption": utils.ConvertToStringPtr(resp.ServerSideEncryption),
 		}
 	}
 	return &Response{
@@ -664,6 +666,7 @@ func (c S3ApiController) CopyObject(ctx fiber.Ctx) (*Response, error) {
 		Headers: map[string]*string{
 			"x-amz-version-id":             res.VersionId,
 			"x-amz-copy-source-version-id": res.CopySourceVersionId,
+			"x-amz-server-side-encryption": utils.ConvertToStringPtr(res.ServerSideEncryption),
 		},
 		Data: res.CopyObjectResult,
 		MetaOpts: &MetaOptions{
@@ -852,20 +855,21 @@ func (c S3ApiController) PutObject(ctx fiber.Ctx) (*Response, error) {
 		})
 	return &Response{
 		Headers: map[string]*string{
-			"ETag":                     &res.ETag,
-			"x-amz-checksum-crc32":     res.ChecksumCRC32,
-			"x-amz-checksum-crc32c":    res.ChecksumCRC32C,
-			"x-amz-checksum-crc64nvme": res.ChecksumCRC64NVME,
-			"x-amz-checksum-sha1":      res.ChecksumSHA1,
-			"x-amz-checksum-sha256":    res.ChecksumSHA256,
-			"x-amz-checksum-sha512":    res.ChecksumSHA512,
-			"x-amz-checksum-md5":       res.ChecksumMD5,
-			"x-amz-checksum-xxhash64":  res.ChecksumXXHASH64,
-			"x-amz-checksum-xxhash3":   res.ChecksumXXHASH3,
-			"x-amz-checksum-xxhash128": res.ChecksumXXHASH128,
-			"x-amz-checksum-type":      utils.ConvertToStringPtr(res.ChecksumType),
-			"x-amz-version-id":         putObjectVersionIdHeader(res.VersionID),
-			"x-amz-object-size":        utils.ConvertPtrToStringPtr(res.Size),
+			"ETag":                         &res.ETag,
+			"x-amz-checksum-crc32":         res.ChecksumCRC32,
+			"x-amz-checksum-crc32c":        res.ChecksumCRC32C,
+			"x-amz-checksum-crc64nvme":     res.ChecksumCRC64NVME,
+			"x-amz-checksum-sha1":          res.ChecksumSHA1,
+			"x-amz-checksum-sha256":        res.ChecksumSHA256,
+			"x-amz-checksum-sha512":        res.ChecksumSHA512,
+			"x-amz-checksum-md5":           res.ChecksumMD5,
+			"x-amz-checksum-xxhash64":      res.ChecksumXXHASH64,
+			"x-amz-checksum-xxhash3":       res.ChecksumXXHASH3,
+			"x-amz-checksum-xxhash128":     res.ChecksumXXHASH128,
+			"x-amz-checksum-type":          utils.ConvertToStringPtr(res.ChecksumType),
+			"x-amz-version-id":             putObjectVersionIdHeader(res.VersionID),
+			"x-amz-object-size":            utils.ConvertPtrToStringPtr(res.Size),
+			"x-amz-server-side-encryption": utils.ConvertToStringPtr(res.ServerSideEncryption),
 		},
 		MetaOpts: &MetaOptions{
 			ContentLength: contentLength,
