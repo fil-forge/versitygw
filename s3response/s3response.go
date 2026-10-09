@@ -44,6 +44,9 @@ type PutObjectOutput struct {
 	ChecksumXXHASH128 *string
 	Size              *int64
 	ChecksumType      types.ChecksumType
+	// ServerSideEncryption is the x-amz-server-side-encryption the response
+	// reports for the stored object; empty for an object stored unencrypted.
+	ServerSideEncryption types.ServerSideEncryption
 }
 
 // Part describes part metadata.
@@ -297,6 +300,40 @@ func (t *Tagging) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	return nil
 }
 
+// ServerSideEncryptionConfiguration is the PutBucketEncryption request body
+// and the GetBucketEncryption response: the bucket's default server-side
+// encryption. SSEAlgorithm is left as the string it arrived with so a backend
+// can accept values beyond the S3 enum.
+type ServerSideEncryptionConfiguration struct {
+	XMLName xml.Name                   `xml:"http://s3.amazonaws.com/doc/2006-03-01/ ServerSideEncryptionConfiguration" json:"-"`
+	Rules   []ServerSideEncryptionRule `xml:"Rule"`
+}
+
+type ServerSideEncryptionRule struct {
+	ApplyServerSideEncryptionByDefault *ServerSideEncryptionByDefault `xml:"ApplyServerSideEncryptionByDefault,omitempty"`
+	BucketKeyEnabled                   *bool                          `xml:"BucketKeyEnabled,omitempty"`
+}
+
+type ServerSideEncryptionByDefault struct {
+	SSEAlgorithm   types.ServerSideEncryption `xml:"SSEAlgorithm"`
+	KMSMasterKeyID *string                    `xml:"KMSMasterKeyID,omitempty"`
+}
+
+// UnmarshalXML accepts ServerSideEncryptionConfiguration documents both with
+// and without the S3 XML namespace, while xml.Marshal continues to emit the
+// namespace via XMLName.
+func (c *ServerSideEncryptionConfiguration) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	type plain struct {
+		Rules []ServerSideEncryptionRule `xml:"Rule"`
+	}
+	var p plain
+	if err := d.DecodeElement(&p, &start); err != nil {
+		return err
+	}
+	c.Rules = p.Rules
+	return nil
+}
+
 type DeleteObjects struct {
 	Objects []types.ObjectIdentifier `xml:"Object"`
 	Quiet   bool                     `xml:"Quiet"`
@@ -435,6 +472,9 @@ type CopyPartResult struct {
 
 	// not included in the body
 	CopySourceVersionId string `xml:"-"`
+	// ServerSideEncryption is the x-amz-server-side-encryption response
+	// header: the encryption the part's upload will store its object under.
+	ServerSideEncryption types.ServerSideEncryption `xml:"-"`
 }
 
 func (r CopyPartResult) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
@@ -474,6 +514,9 @@ type CompleteMultipartUploadResult struct {
 	ChecksumXXHASH3   *string
 	ChecksumXXHASH128 *string
 	ChecksumType      *types.ChecksumType
+	// ServerSideEncryption is the x-amz-server-side-encryption response
+	// header for the completed object.
+	ServerSideEncryption types.ServerSideEncryption `xml:"-"`
 }
 
 type AccessControlPolicy struct {
@@ -514,6 +557,9 @@ type InitiateMultipartUploadResult struct {
 	Bucket   string
 	Key      string
 	UploadId string
+	// ServerSideEncryption is the x-amz-server-side-encryption response
+	// header: the encryption the upload's object will be stored under.
+	ServerSideEncryption types.ServerSideEncryption `xml:"-"`
 }
 
 type ListVersionsResult struct {

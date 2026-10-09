@@ -47,6 +47,9 @@ var _ backend.Backend = &BackendMock{}
 //			DeleteBucketCorsFunc: func(contextMoqParam context.Context, bucket string) error {
 //				panic("mock out the DeleteBucketCors method")
 //			},
+//			DeleteBucketEncryptionFunc: func(contextMoqParam context.Context, bucket string) error {
+//				panic("mock out the DeleteBucketEncryption method")
+//			},
 //			DeleteBucketOwnershipControlsFunc: func(contextMoqParam context.Context, bucket string) error {
 //				panic("mock out the DeleteBucketOwnershipControls method")
 //			},
@@ -73,6 +76,9 @@ var _ backend.Backend = &BackendMock{}
 //			},
 //			GetBucketCorsFunc: func(contextMoqParam context.Context, bucket string) ([]byte, error) {
 //				panic("mock out the GetBucketCors method")
+//			},
+//			GetBucketEncryptionFunc: func(contextMoqParam context.Context, bucket string) (s3response.ServerSideEncryptionConfiguration, error) {
+//				panic("mock out the GetBucketEncryption method")
 //			},
 //			GetBucketOwnershipControlsFunc: func(contextMoqParam context.Context, bucket string) (types.ObjectOwnership, error) {
 //				panic("mock out the GetBucketOwnershipControls method")
@@ -145,6 +151,9 @@ var _ backend.Backend = &BackendMock{}
 //			},
 //			PutBucketCorsFunc: func(contextMoqParam context.Context, bucket string, cors []byte) error {
 //				panic("mock out the PutBucketCors method")
+//			},
+//			PutBucketEncryptionFunc: func(contextMoqParam context.Context, bucket string, config s3response.ServerSideEncryptionConfiguration) error {
+//				panic("mock out the PutBucketEncryption method")
 //			},
 //			PutBucketOwnershipControlsFunc: func(contextMoqParam context.Context, bucket string, ownership types.ObjectOwnership) error {
 //				panic("mock out the PutBucketOwnershipControls method")
@@ -228,6 +237,9 @@ type BackendMock struct {
 	// DeleteBucketCorsFunc mocks the DeleteBucketCors method.
 	DeleteBucketCorsFunc func(contextMoqParam context.Context, bucket string) error
 
+	// DeleteBucketEncryptionFunc mocks the DeleteBucketEncryption method.
+	DeleteBucketEncryptionFunc func(contextMoqParam context.Context, bucket string) error
+
 	// DeleteBucketOwnershipControlsFunc mocks the DeleteBucketOwnershipControls method.
 	DeleteBucketOwnershipControlsFunc func(contextMoqParam context.Context, bucket string) error
 
@@ -254,6 +266,9 @@ type BackendMock struct {
 
 	// GetBucketCorsFunc mocks the GetBucketCors method.
 	GetBucketCorsFunc func(contextMoqParam context.Context, bucket string) ([]byte, error)
+
+	// GetBucketEncryptionFunc mocks the GetBucketEncryption method.
+	GetBucketEncryptionFunc func(contextMoqParam context.Context, bucket string) (s3response.ServerSideEncryptionConfiguration, error)
 
 	// GetBucketOwnershipControlsFunc mocks the GetBucketOwnershipControls method.
 	GetBucketOwnershipControlsFunc func(contextMoqParam context.Context, bucket string) (types.ObjectOwnership, error)
@@ -326,6 +341,9 @@ type BackendMock struct {
 
 	// PutBucketCorsFunc mocks the PutBucketCors method.
 	PutBucketCorsFunc func(contextMoqParam context.Context, bucket string, cors []byte) error
+
+	// PutBucketEncryptionFunc mocks the PutBucketEncryption method.
+	PutBucketEncryptionFunc func(contextMoqParam context.Context, bucket string, config s3response.ServerSideEncryptionConfiguration) error
 
 	// PutBucketOwnershipControlsFunc mocks the PutBucketOwnershipControls method.
 	PutBucketOwnershipControlsFunc func(contextMoqParam context.Context, bucket string, ownership types.ObjectOwnership) error
@@ -440,6 +458,13 @@ type BackendMock struct {
 			// Bucket is the bucket argument value.
 			Bucket string
 		}
+		// DeleteBucketEncryption holds details about calls to the DeleteBucketEncryption method.
+		DeleteBucketEncryption []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// Bucket is the bucket argument value.
+			Bucket string
+		}
 		// DeleteBucketOwnershipControls holds details about calls to the DeleteBucketOwnershipControls method.
 		DeleteBucketOwnershipControls []struct {
 			// ContextMoqParam is the contextMoqParam argument value.
@@ -502,6 +527,13 @@ type BackendMock struct {
 		}
 		// GetBucketCors holds details about calls to the GetBucketCors method.
 		GetBucketCors []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// Bucket is the bucket argument value.
+			Bucket string
+		}
+		// GetBucketEncryption holds details about calls to the GetBucketEncryption method.
+		GetBucketEncryption []struct {
 			// ContextMoqParam is the contextMoqParam argument value.
 			ContextMoqParam context.Context
 			// Bucket is the bucket argument value.
@@ -689,6 +721,15 @@ type BackendMock struct {
 			// Cors is the cors argument value.
 			Cors []byte
 		}
+		// PutBucketEncryption holds details about calls to the PutBucketEncryption method.
+		PutBucketEncryption []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// Bucket is the bucket argument value.
+			Bucket string
+			// Config is the config argument value.
+			Config s3response.ServerSideEncryptionConfiguration
+		}
 		// PutBucketOwnershipControls holds details about calls to the PutBucketOwnershipControls method.
 		PutBucketOwnershipControls []struct {
 			// ContextMoqParam is the contextMoqParam argument value.
@@ -839,6 +880,7 @@ type BackendMock struct {
 	lockCreateMultipartUpload         sync.RWMutex
 	lockDeleteBucket                  sync.RWMutex
 	lockDeleteBucketCors              sync.RWMutex
+	lockDeleteBucketEncryption        sync.RWMutex
 	lockDeleteBucketOwnershipControls sync.RWMutex
 	lockDeleteBucketPolicy            sync.RWMutex
 	lockDeleteBucketTagging           sync.RWMutex
@@ -848,6 +890,7 @@ type BackendMock struct {
 	lockDeleteObjects                 sync.RWMutex
 	lockGetBucketAcl                  sync.RWMutex
 	lockGetBucketCors                 sync.RWMutex
+	lockGetBucketEncryption           sync.RWMutex
 	lockGetBucketOwnershipControls    sync.RWMutex
 	lockGetBucketPolicy               sync.RWMutex
 	lockGetBucketTagging              sync.RWMutex
@@ -872,6 +915,7 @@ type BackendMock struct {
 	lockNormalizeObjectKey            sync.RWMutex
 	lockPutBucketAcl                  sync.RWMutex
 	lockPutBucketCors                 sync.RWMutex
+	lockPutBucketEncryption           sync.RWMutex
 	lockPutBucketOwnershipControls    sync.RWMutex
 	lockPutBucketPolicy               sync.RWMutex
 	lockPutBucketTagging              sync.RWMutex
@@ -1184,6 +1228,42 @@ func (mock *BackendMock) DeleteBucketCorsCalls() []struct {
 	mock.lockDeleteBucketCors.RLock()
 	calls = mock.calls.DeleteBucketCors
 	mock.lockDeleteBucketCors.RUnlock()
+	return calls
+}
+
+// DeleteBucketEncryption calls DeleteBucketEncryptionFunc.
+func (mock *BackendMock) DeleteBucketEncryption(contextMoqParam context.Context, bucket string) error {
+	if mock.DeleteBucketEncryptionFunc == nil {
+		panic("BackendMock.DeleteBucketEncryptionFunc: method is nil but Backend.DeleteBucketEncryption was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam context.Context
+		Bucket          string
+	}{
+		ContextMoqParam: contextMoqParam,
+		Bucket:          bucket,
+	}
+	mock.lockDeleteBucketEncryption.Lock()
+	mock.calls.DeleteBucketEncryption = append(mock.calls.DeleteBucketEncryption, callInfo)
+	mock.lockDeleteBucketEncryption.Unlock()
+	return mock.DeleteBucketEncryptionFunc(contextMoqParam, bucket)
+}
+
+// DeleteBucketEncryptionCalls gets all the calls that were made to DeleteBucketEncryption.
+// Check the length with:
+//
+//	len(mockedBackend.DeleteBucketEncryptionCalls())
+func (mock *BackendMock) DeleteBucketEncryptionCalls() []struct {
+	ContextMoqParam context.Context
+	Bucket          string
+} {
+	var calls []struct {
+		ContextMoqParam context.Context
+		Bucket          string
+	}
+	mock.lockDeleteBucketEncryption.RLock()
+	calls = mock.calls.DeleteBucketEncryption
+	mock.lockDeleteBucketEncryption.RUnlock()
 	return calls
 }
 
@@ -1516,6 +1596,42 @@ func (mock *BackendMock) GetBucketCorsCalls() []struct {
 	mock.lockGetBucketCors.RLock()
 	calls = mock.calls.GetBucketCors
 	mock.lockGetBucketCors.RUnlock()
+	return calls
+}
+
+// GetBucketEncryption calls GetBucketEncryptionFunc.
+func (mock *BackendMock) GetBucketEncryption(contextMoqParam context.Context, bucket string) (s3response.ServerSideEncryptionConfiguration, error) {
+	if mock.GetBucketEncryptionFunc == nil {
+		panic("BackendMock.GetBucketEncryptionFunc: method is nil but Backend.GetBucketEncryption was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam context.Context
+		Bucket          string
+	}{
+		ContextMoqParam: contextMoqParam,
+		Bucket:          bucket,
+	}
+	mock.lockGetBucketEncryption.Lock()
+	mock.calls.GetBucketEncryption = append(mock.calls.GetBucketEncryption, callInfo)
+	mock.lockGetBucketEncryption.Unlock()
+	return mock.GetBucketEncryptionFunc(contextMoqParam, bucket)
+}
+
+// GetBucketEncryptionCalls gets all the calls that were made to GetBucketEncryption.
+// Check the length with:
+//
+//	len(mockedBackend.GetBucketEncryptionCalls())
+func (mock *BackendMock) GetBucketEncryptionCalls() []struct {
+	ContextMoqParam context.Context
+	Bucket          string
+} {
+	var calls []struct {
+		ContextMoqParam context.Context
+		Bucket          string
+	}
+	mock.lockGetBucketEncryption.RLock()
+	calls = mock.calls.GetBucketEncryption
+	mock.lockGetBucketEncryption.RUnlock()
 	return calls
 }
 
@@ -2408,6 +2524,46 @@ func (mock *BackendMock) PutBucketCorsCalls() []struct {
 	mock.lockPutBucketCors.RLock()
 	calls = mock.calls.PutBucketCors
 	mock.lockPutBucketCors.RUnlock()
+	return calls
+}
+
+// PutBucketEncryption calls PutBucketEncryptionFunc.
+func (mock *BackendMock) PutBucketEncryption(contextMoqParam context.Context, bucket string, config s3response.ServerSideEncryptionConfiguration) error {
+	if mock.PutBucketEncryptionFunc == nil {
+		panic("BackendMock.PutBucketEncryptionFunc: method is nil but Backend.PutBucketEncryption was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam context.Context
+		Bucket          string
+		Config          s3response.ServerSideEncryptionConfiguration
+	}{
+		ContextMoqParam: contextMoqParam,
+		Bucket:          bucket,
+		Config:          config,
+	}
+	mock.lockPutBucketEncryption.Lock()
+	mock.calls.PutBucketEncryption = append(mock.calls.PutBucketEncryption, callInfo)
+	mock.lockPutBucketEncryption.Unlock()
+	return mock.PutBucketEncryptionFunc(contextMoqParam, bucket, config)
+}
+
+// PutBucketEncryptionCalls gets all the calls that were made to PutBucketEncryption.
+// Check the length with:
+//
+//	len(mockedBackend.PutBucketEncryptionCalls())
+func (mock *BackendMock) PutBucketEncryptionCalls() []struct {
+	ContextMoqParam context.Context
+	Bucket          string
+	Config          s3response.ServerSideEncryptionConfiguration
+} {
+	var calls []struct {
+		ContextMoqParam context.Context
+		Bucket          string
+		Config          s3response.ServerSideEncryptionConfiguration
+	}
+	mock.lockPutBucketEncryption.RLock()
+	calls = mock.calls.PutBucketEncryption
+	mock.lockPutBucketEncryption.RUnlock()
 	return calls
 }
 

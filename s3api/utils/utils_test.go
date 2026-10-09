@@ -1664,3 +1664,74 @@ func TestValidateCopySource(t *testing.T) {
 		})
 	}
 }
+
+func TestParseServerSideEncryptionConfiguration(t *testing.T) {
+	const ns = `xmlns="http://s3.amazonaws.com/doc/2006-03-01/"`
+	rule := func(algo string) string {
+		return `<Rule><ApplyServerSideEncryptionByDefault><SSEAlgorithm>` + algo + `</SSEAlgorithm></ApplyServerSideEncryptionByDefault></Rule>`
+	}
+	tests := []struct {
+		name    string
+		body    string
+		want    types.ServerSideEncryption
+		wantErr error
+	}{
+		{
+			name: "with namespace",
+			body: `<ServerSideEncryptionConfiguration ` + ns + `>` + rule("AES256") + `</ServerSideEncryptionConfiguration>`,
+			want: types.ServerSideEncryptionAes256,
+		},
+		{
+			name: "without namespace",
+			body: `<ServerSideEncryptionConfiguration>` + rule("AES256") + `</ServerSideEncryptionConfiguration>`,
+			want: types.ServerSideEncryptionAes256,
+		},
+		{
+			name: "algorithm outside the S3 enum is the backend's to judge",
+			body: `<ServerSideEncryptionConfiguration>` + rule("none") + `</ServerSideEncryptionConfiguration>`,
+			want: types.ServerSideEncryption("none"),
+		},
+		{
+			name:    "not xml",
+			body:    `not xml`,
+			wantErr: s3err.GetAPIError(s3err.ErrMalformedXML),
+		},
+		{
+			name:    "no rule",
+			body:    `<ServerSideEncryptionConfiguration ` + ns + `></ServerSideEncryptionConfiguration>`,
+			wantErr: s3err.GetAPIError(s3err.ErrMalformedXML),
+		},
+		{
+			name:    "two rules",
+			body:    `<ServerSideEncryptionConfiguration>` + rule("AES256") + rule("AES256") + `</ServerSideEncryptionConfiguration>`,
+			wantErr: s3err.GetAPIError(s3err.ErrMalformedXML),
+		},
+		{
+			name:    "rule without a default",
+			body:    `<ServerSideEncryptionConfiguration><Rule><BucketKeyEnabled>true</BucketKeyEnabled></Rule></ServerSideEncryptionConfiguration>`,
+			wantErr: s3err.GetAPIError(s3err.ErrMalformedXML),
+		},
+		{
+			name:    "empty algorithm",
+			body:    `<ServerSideEncryptionConfiguration>` + rule("") + `</ServerSideEncryptionConfiguration>`,
+			wantErr: s3err.GetAPIError(s3err.ErrMalformedXML),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseServerSideEncryptionConfiguration([]byte(tt.body))
+			if tt.wantErr != nil {
+				if err == nil || err.Error() != tt.wantErr.Error() {
+					t.Fatalf("err = %v, want %v", err, tt.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if algo := got.Rules[0].ApplyServerSideEncryptionByDefault.SSEAlgorithm; algo != tt.want {
+				t.Fatalf("SSEAlgorithm = %q, want %q", algo, tt.want)
+			}
+		})
+	}
+}
