@@ -199,6 +199,7 @@ func (c S3ApiController) HeadObject(ctx fiber.Ctx) (*Response, error) {
 			"x-amz-object-lock-mode":              utils.ConvertToStringPtr(res.ObjectLockMode),
 			"x-amz-object-lock-legal-hold":        utils.ConvertToStringPtr(res.ObjectLockLegalHoldStatus),
 			"x-amz-storage-class":                 utils.ConvertToStringPtr(res.StorageClass),
+			"x-amz-server-side-encryption":        utils.ConvertToStringPtr(res.ServerSideEncryption),
 			"x-amz-checksum-type":                 utils.ConvertToStringPtr(res.ChecksumType),
 			"x-amz-object-lock-retain-until-date": utils.FormatDatePtrToString(res.ObjectLockRetainUntilDate, time.RFC3339),
 			"x-amz-tagging-count":                 utils.ConvertPtrToStringPtr(res.TagCount),

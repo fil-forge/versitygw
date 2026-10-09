@@ -266,8 +266,9 @@ func (c S3ApiController) CreateMultipartUpload(ctx fiber.Ctx) (*Response, error)
 	var headers map[string]*string
 	if err == nil {
 		headers = map[string]*string{
-			"x-amz-checksum-algorithm": utils.ConvertToStringPtr(checksumAlgorithm),
-			"x-amz-checksum-type":      utils.ConvertToStringPtr(checksumType),
+			"x-amz-checksum-algorithm":     utils.ConvertToStringPtr(checksumAlgorithm),
+			"x-amz-checksum-type":          utils.ConvertToStringPtr(checksumType),
+			"x-amz-server-side-encryption": utils.ConvertToStringPtr(res.ServerSideEncryption),
 		}
 	}
 	return &Response{
@@ -426,7 +427,8 @@ func (c S3ApiController) CompleteMultipartUpload(ctx fiber.Ctx) (*Response, erro
 	return &Response{
 		Data: res,
 		Headers: map[string]*string{
-			"x-amz-version-id": &versid,
+			"x-amz-version-id":             &versid,
+			"x-amz-server-side-encryption": utils.ConvertToStringPtr(res.ServerSideEncryption),
 		},
 		MetaOpts: &MetaOptions{
 			BucketOwner: parsedAcl.Owner,

@@ -941,6 +941,25 @@ const (
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_Tag.html
 var tagRule = regexp.MustCompile(`^([\p{L}\p{Z}\p{N}_.:/=+\-@]*)$`)
 
+// ParseServerSideEncryptionConfiguration parses a PutBucketEncryption body.
+// It checks the document's shape — exactly one Rule, carrying an
+// ApplyServerSideEncryptionByDefault with an SSEAlgorithm — and leaves the
+// algorithm itself to the backend, which decides what it supports.
+func ParseServerSideEncryptionConfiguration(data []byte) (s3response.ServerSideEncryptionConfiguration, error) {
+	var config s3response.ServerSideEncryptionConfiguration
+	if err := xml.Unmarshal(data, &config); err != nil {
+		return config, s3err.GetAPIError(s3err.ErrMalformedXML)
+	}
+	if len(config.Rules) != 1 {
+		return config, s3err.GetAPIError(s3err.ErrMalformedXML)
+	}
+	byDefault := config.Rules[0].ApplyServerSideEncryptionByDefault
+	if byDefault == nil || byDefault.SSEAlgorithm == "" {
+		return config, s3err.GetAPIError(s3err.ErrMalformedXML)
+	}
+	return config, nil
+}
+
 // Parses and validates tagging
 func ParseTagging(data []byte, limit TagLimit) (map[string]string, error) {
 	var tagging s3response.Tagging

@@ -1393,3 +1393,91 @@ func TestS3ApiController_GetBucketLocation(t *testing.T) {
 		})
 	}
 }
+
+func TestS3ApiController_GetBucketEncryption(t *testing.T) {
+	aes256 := s3response.ServerSideEncryptionConfiguration{
+		Rules: []s3response.ServerSideEncryptionRule{{
+			ApplyServerSideEncryptionByDefault: &s3response.ServerSideEncryptionByDefault{
+				SSEAlgorithm: types.ServerSideEncryptionAes256,
+			},
+		}},
+	}
+	tests := []struct {
+		name   string
+		input  testInput
+		output testOutput
+	}{
+		{
+			name: "verify access fails",
+			input: testInput{
+				locals: accessDeniedLocals,
+				beRes:  s3response.ServerSideEncryptionConfiguration{},
+			},
+			output: testOutput{
+				response: &Response{
+					MetaOpts: &MetaOptions{
+						BucketOwner: "root",
+					},
+				},
+				err: s3err.GetAPIError(s3err.ErrAccessDenied),
+			},
+		},
+		{
+			name: "backend returns error",
+			input: testInput{
+				locals: defaultLocals,
+				beRes:  s3response.ServerSideEncryptionConfiguration{},
+				beErr:  s3err.GetAPIError(s3err.ErrServerSideEncryptionConfigurationNotFound),
+			},
+			output: testOutput{
+				response: &Response{
+					MetaOpts: &MetaOptions{
+						BucketOwner: "root",
+					},
+				},
+				err: s3err.GetAPIError(s3err.ErrServerSideEncryptionConfigurationNotFound),
+			},
+		},
+		{
+			name: "successful response",
+			input: testInput{
+				locals: defaultLocals,
+				beRes:  aes256,
+			},
+			output: testOutput{
+				response: &Response{
+					Data: aes256,
+					MetaOpts: &MetaOptions{
+						BucketOwner: "root",
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			be := &BackendMock{
+				GetBucketEncryptionFunc: func(contextMoqParam context.Context, bucket string) (s3response.ServerSideEncryptionConfiguration, error) {
+					return tt.input.beRes.(s3response.ServerSideEncryptionConfiguration), tt.input.beErr
+				},
+				GetBucketPolicyFunc: func(contextMoqParam context.Context, bucket string) ([]byte, error) {
+					return nil, s3err.GetAPIError(s3err.ErrAccessDenied)
+				},
+			}
+
+			ctrl := S3ApiController{
+				be: be,
+			}
+
+			testController(
+				t,
+				ctrl.GetBucketEncryption,
+				tt.output.response,
+				tt.output.err,
+				ctxInputs{
+					locals: tt.input.locals,
+					body:   tt.input.body,
+				})
+		})
+	}
+}

@@ -401,6 +401,49 @@ func (c S3ApiController) ListObjectVersions(ctx fiber.Ctx) (*Response, error) {
 	}, err
 }
 
+func (c S3ApiController) GetBucketEncryption(ctx fiber.Ctx) (*Response, error) {
+	bucket := ctx.Params("bucket")
+	acct := utils.ContextKeyAccount.Get(ctx).(auth.Account)
+	isRoot := utils.ContextKeyIsRoot.Get(ctx).(bool)
+	isPublicBucket := utils.ContextKeyPublicBucket.IsSet(ctx)
+	parsedAcl := utils.ContextKeyParsedAcl.Get(ctx).(auth.ACL)
+
+	err := auth.VerifyAccess(ctx.RequestCtx(), c.be, auth.AccessOptions{
+		Readonly:        c.readonly,
+		Acl:             parsedAcl,
+		AclPermission:   auth.PermissionRead,
+		IsRoot:          isRoot,
+		Acc:             acct,
+		Bucket:          bucket,
+		Actions:         []auth.Action{auth.GetEncryptionConfigurationAction},
+		IsPublicRequest: isPublicBucket,
+		DisableACL:      c.disableACL,
+	})
+	if err != nil {
+		return &Response{
+			MetaOpts: &MetaOptions{
+				BucketOwner: parsedAcl.Owner,
+			},
+		}, err
+	}
+
+	config, err := c.be.GetBucketEncryption(ctx.RequestCtx(), bucket)
+	if err != nil {
+		return &Response{
+			MetaOpts: &MetaOptions{
+				BucketOwner: parsedAcl.Owner,
+			},
+		}, err
+	}
+
+	return &Response{
+		Data: config,
+		MetaOpts: &MetaOptions{
+			BucketOwner: parsedAcl.Owner,
+		},
+	}, nil
+}
+
 func (c S3ApiController) GetObjectLockConfiguration(ctx fiber.Ctx) (*Response, error) {
 	// url values
 	bucket := ctx.Params("bucket")

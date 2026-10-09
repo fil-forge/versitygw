@@ -58,6 +58,42 @@ func (c S3ApiController) DeleteBucketTagging(ctx fiber.Ctx) (*Response, error) {
 	}, err
 }
 
+func (c S3ApiController) DeleteBucketEncryption(ctx fiber.Ctx) (*Response, error) {
+	bucket := ctx.Params("bucket")
+	acct := utils.ContextKeyAccount.Get(ctx).(auth.Account)
+	isRoot := utils.ContextKeyIsRoot.Get(ctx).(bool)
+	parsedAcl := utils.ContextKeyParsedAcl.Get(ctx).(auth.ACL)
+	isPublicBucket := utils.ContextKeyPublicBucket.IsSet(ctx)
+
+	err := auth.VerifyAccess(ctx.RequestCtx(), c.be,
+		auth.AccessOptions{
+			Readonly:        c.readonly,
+			Acl:             parsedAcl,
+			AclPermission:   auth.PermissionWrite,
+			IsRoot:          isRoot,
+			Acc:             acct,
+			Bucket:          bucket,
+			Actions:         []auth.Action{auth.PutEncryptionConfigurationAction},
+			IsPublicRequest: isPublicBucket,
+			DisableACL:      c.disableACL,
+		})
+	if err != nil {
+		return &Response{
+			MetaOpts: &MetaOptions{
+				BucketOwner: parsedAcl.Owner,
+			},
+		}, err
+	}
+
+	err = c.be.DeleteBucketEncryption(ctx.RequestCtx(), bucket)
+	return &Response{
+		MetaOpts: &MetaOptions{
+			BucketOwner: parsedAcl.Owner,
+			Status:      http.StatusNoContent,
+		},
+	}, err
+}
+
 func (c S3ApiController) DeleteBucketOwnershipControls(ctx fiber.Ctx) (*Response, error) {
 	bucket := ctx.Params("bucket")
 	acct := utils.ContextKeyAccount.Get(ctx).(auth.Account)
