@@ -134,7 +134,10 @@ func (ld *LdapIAMService) execute(f func(*ldap.Conn) error) error {
 }
 
 func (ld *LdapIAMService) CreateAccount(account Account) error {
-	if ld.rootAcc.Access == account.Access {
+	if err := validateNewAccount(account); err != nil {
+		return err
+	}
+	if isRootAccess(ld.rootAcc, account.Access) {
 		return ErrUserExists
 	}
 	userEntry := ldap.NewAddRequest(ld.buildUserDN(account.Access), nil)
@@ -172,7 +175,12 @@ func (ld *LdapIAMService) buildSearchFilter(access string) string {
 }
 
 func (ld *LdapIAMService) GetUserAccount(access string) (Account, error) {
-	if access == ld.rootAcc.Access {
+	// An empty access key would drop the access clause from the search
+	// filter and match an arbitrary directory entry.
+	if access == "" {
+		return Account{}, ErrNoSuchUser
+	}
+	if isRootAccess(ld.rootAcc, access) {
 		return ld.rootAcc, nil
 	}
 	var result *ldap.SearchResult

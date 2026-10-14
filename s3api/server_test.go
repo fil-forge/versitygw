@@ -35,11 +35,13 @@ import (
 )
 
 func newTestS3ApiServer(opts ...Option) (*S3ApiServer, error) {
-	allOpts := append([]Option{WithConcurrencyLimiter(10, 10)}, opts...)
+	allOpts := append([]Option{
+		WithConcurrencyLimiter(10, 10),
+		WithRootUser(middlewares.RootUserConfig{Access: "access", Secret: "secret"}),
+	}, opts...)
 
 	return New(
 		backend.BackendUnsupported{},
-		middlewares.RootUserConfig{Access: "access", Secret: "secret"},
 		"us-east-1",
 		auth.NewIAMServiceSingle(auth.Account{Access: "access", Secret: "secret"}),
 		nil,

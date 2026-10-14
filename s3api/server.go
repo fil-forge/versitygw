@@ -74,9 +74,11 @@ type middlewareMount struct {
 	handler fiber.Handler
 }
 
+// New constructs the S3 API server. The gateway runs without a root account
+// unless WithRootUser is passed: every non-empty access key then resolves
+// through iam, and an empty access key is rejected before any lookup.
 func New(
 	be backend.Backend,
-	root middlewares.RootUserConfig,
 	region string,
 	iam auth.IAMService,
 	l s3log.AuditLogger,
@@ -94,7 +96,6 @@ func New(
 			aLogger: adminLogger,
 			evs:     evs,
 			mm:      mm,
-			root:    root,
 			region:  region,
 		},
 	}
@@ -180,7 +181,7 @@ func New(
 	}
 
 	// initilaze the default value setter middleware
-	app.Use("*", middlewares.SetDefaultValues(root, region))
+	app.Use("*", middlewares.SetDefaultValues(server.Router.root, region))
 
 	// initialize the 'DecodeURL' middleware which
 	// path unescapes the url
@@ -244,6 +245,19 @@ type Option func(*S3ApiServer)
 // WithTLS sets TLS Credentials
 func WithTLS(cs *utils.CertStorage) Option {
 	return func(s *S3ApiServer) { s.CertStorage = cs }
+}
+
+// WithRootUser enables the built-in root account: an access key the auth
+// middlewares resolve ahead of the IAM service, with the admin role and every
+// ACL / policy check skipped. A config missing either credential is ignored.
+// Without a root account the gateway resolves every access key through iam
+// (see middlewares.RootUserConfig for the ownership consequences).
+func WithRootUser(root middlewares.RootUserConfig) Option {
+	return func(s *S3ApiServer) {
+		if root.Enabled() {
+			s.Router.root = root
+		}
+	}
 }
 
 // WithAdminServer runs admin endpoints with the gateway in the same network
