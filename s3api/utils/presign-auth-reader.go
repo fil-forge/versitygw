@@ -38,7 +38,7 @@ const (
 )
 
 // CheckPresignedSignature validates presigned request signature
-func CheckPresignedSignature(ctx fiber.Ctx, auth AuthData, secret string) error {
+func CheckPresignedSignature(ctx fiber.Ctx, auth AuthData, cred SigningCred) error {
 	signedHdrs := strings.Split(auth.SignedHeaders, ";")
 
 	var contentLength int64
@@ -62,9 +62,12 @@ func CheckPresignedSignature(ctx fiber.Ctx, auth AuthData, secret string) error 
 	signer := v4.NewSigner()
 	uri, _, signMeta, signErr := signer.PresignHTTP(ctx.RequestCtx(), aws.Credentials{
 		AccessKeyID:     auth.Access,
-		SecretAccessKey: secret,
+		SecretAccessKey: cred.Secret,
 	}, req, unsignedPayload, service, auth.Region, date, signedHdrs, func(options *v4.SignerOptions) {
 		options.DisableURIPathEscaping = true
+		if len(cred.SigningKey) > 0 {
+			options.KeyDerivator = v4.StaticKeyDerivator(cred.SigningKey)
+		}
 		if debuglogger.IsDebugEnabled() {
 			options.LogSigning = true
 			options.Logger = logging.NewStandardLogger(os.Stderr)

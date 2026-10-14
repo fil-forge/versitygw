@@ -43,7 +43,7 @@ func TestCheckPresignedSignatureRejectsUnsignedAmzHeader(t *testing.T) {
 	authData, err := ParsePresignedURIParts(ctx, signedHeadersTestRegion)
 	require.NoError(t, err)
 
-	err = CheckPresignedSignature(ctx, authData, signedHeadersTestCreds.SecretAccessKey)
+	err = CheckPresignedSignature(ctx, authData, SigningCred{Secret: signedHeadersTestCreds.SecretAccessKey})
 	requireHeadersNotSigned(t, err, "x-amz-copy-source")
 }
 
@@ -56,7 +56,7 @@ func TestCheckPresignedSignatureAllowsSignedAmzHeader(t *testing.T) {
 	authData, err := ParsePresignedURIParts(ctx, signedHeadersTestRegion)
 	require.NoError(t, err)
 
-	err = CheckPresignedSignature(ctx, authData, signedHeadersTestCreds.SecretAccessKey)
+	err = CheckPresignedSignature(ctx, authData, SigningCred{Secret: signedHeadersTestCreds.SecretAccessKey})
 	require.NoError(t, err)
 }
 
@@ -69,7 +69,7 @@ func TestCheckPresignedSignatureAllowsUnsignedNonAmzHeader(t *testing.T) {
 	authData, err := ParsePresignedURIParts(ctx, signedHeadersTestRegion)
 	require.NoError(t, err)
 
-	err = CheckPresignedSignature(ctx, authData, signedHeadersTestCreds.SecretAccessKey)
+	err = CheckPresignedSignature(ctx, authData, SigningCred{Secret: signedHeadersTestCreds.SecretAccessKey})
 	require.NoError(t, err)
 }
 
@@ -78,7 +78,7 @@ func TestCheckValidSignatureRejectsUnsignedAmzHeader(t *testing.T) {
 		"X-Amz-Tagging": []string{"a=b"},
 	})
 
-	_, err := CheckValidSignature(ctx, authData, signedHeadersTestCreds.SecretAccessKey, unsignedPayload, signingTime, 0)
+	_, err := CheckValidSignature(ctx, authData, SigningCred{Secret: signedHeadersTestCreds.SecretAccessKey}, unsignedPayload, signingTime, 0)
 	requireHeadersNotSigned(t, err, "x-amz-tagging")
 }
 
@@ -87,7 +87,7 @@ func TestCheckValidSignatureAllowsSignedAmzHeader(t *testing.T) {
 		"X-Amz-Tagging": []string{"a=b"},
 	}, nil)
 
-	_, err := CheckValidSignature(ctx, authData, signedHeadersTestCreds.SecretAccessKey, unsignedPayload, signingTime, 0)
+	_, err := CheckValidSignature(ctx, authData, SigningCred{Secret: signedHeadersTestCreds.SecretAccessKey}, unsignedPayload, signingTime, 0)
 	require.NoError(t, err)
 }
 
@@ -97,7 +97,7 @@ func TestCheckValidSignatureAllowsUnsignedNonAmzHeader(t *testing.T) {
 		"X-Custom-Header": []string{"value"},
 	})
 
-	_, err := CheckValidSignature(ctx, authData, signedHeadersTestCreds.SecretAccessKey, unsignedPayload, signingTime, 0)
+	_, err := CheckValidSignature(ctx, authData, SigningCred{Secret: signedHeadersTestCreds.SecretAccessKey}, unsignedPayload, signingTime, 0)
 	require.NoError(t, err)
 }
 
@@ -109,7 +109,7 @@ func TestCheckPresignedSignatureRejectsUnsignedAmzHeaderPattern(t *testing.T) {
 	authData, err := ParsePresignedURIParts(ctx, signedHeadersTestRegion)
 	require.NoError(t, err)
 
-	err = CheckPresignedSignature(ctx, authData, signedHeadersTestCreds.SecretAccessKey)
+	err = CheckPresignedSignature(ctx, authData, SigningCred{Secret: signedHeadersTestCreds.SecretAccessKey})
 	requireHeadersNotSigned(t, err, "x-amz-some-other-header")
 }
 
@@ -118,7 +118,7 @@ func TestCheckValidSignatureRejectsUnsignedAmzHeaderPattern(t *testing.T) {
 		"X-Amz-Some-Other-Header": []string{"value"},
 	})
 
-	_, err := CheckValidSignature(ctx, authData, signedHeadersTestCreds.SecretAccessKey, unsignedPayload, signingTime, 0)
+	_, err := CheckValidSignature(ctx, authData, SigningCred{Secret: signedHeadersTestCreds.SecretAccessKey}, unsignedPayload, signingTime, 0)
 	requireHeadersNotSigned(t, err, "x-amz-some-other-header")
 }
 

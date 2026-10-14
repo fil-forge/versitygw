@@ -164,7 +164,7 @@ func AuthorizePostObject(root RootUserConfig, iam auth.IAMService, region string
 				return s3err.PostAuth.IncorrectRegion(credentialStr, region, creds.Region)
 			}
 
-			account, err := acct.getAccount(creds.Access)
+			account, err := acct.getAccount(ctx, creds.Access)
 			if err == auth.ErrNoSuchUser {
 				debuglogger.Logf("POST object access key not found: %s", creds.Access)
 				return s3err.GetInvalidAccessKeyIdErr(creds.Access)
@@ -177,7 +177,7 @@ func AuthorizePostObject(root RootUserConfig, iam auth.IAMService, region string
 			utils.ContextKeyAccount.Set(ctx, account)
 			utils.ContextKeyIsRoot.Set(ctx, account.Access == root.Access)
 
-			expectedSig, err := utils.SignPostPolicy(policyB64, creds.Date, region, account.Secret)
+			expectedSig, err := utils.SignPostPolicy(policyB64, creds.Date, region, signingCred(account))
 			if err != nil {
 				return err
 			}

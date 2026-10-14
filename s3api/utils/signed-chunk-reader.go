@@ -85,10 +85,10 @@ type ChunkReader struct {
 // chunk metadata in stream. The headers are validated for proper signatures.
 // Reading from the chunk reader will read only the object data stream
 // without the chunk headers/trailers.
-func NewSignedChunkReader(r io.Reader, authdata AuthData, canonicalString, secret string, date time.Time, chType checksumType, requireTrailer bool, cLength int64) (io.Reader, error) {
+func NewSignedChunkReader(r io.Reader, authdata AuthData, canonicalString string, cred SigningCred, date time.Time, chType checksumType, requireTrailer bool, cLength int64) (io.Reader, error) {
 	chRdr := &ChunkReader{
 		r:          r,
-		signingKey: getSigningKey(secret, authdata.Region, date),
+		signingKey: cred.signingKey(authdata.Region, date),
 		// the authdata.Signature is validated in the auth-reader,
 		// so we can use that here without any other checks
 		prevSig:         authdata.Signature,

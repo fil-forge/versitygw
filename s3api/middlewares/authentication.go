@@ -89,7 +89,7 @@ func VerifyV4Signature(root RootUserConfig, iam auth.IAMService, region string, 
 
 		utils.ContextKeyIsRoot.Set(ctx, authData.Access == root.Access)
 
-		account, err := acct.getAccount(authData.Access)
+		account, err := acct.getAccount(ctx, authData.Access)
 		if err == auth.ErrNoSuchUser {
 			return s3err.GetInvalidAccessKeyIdErr(authData.Access)
 		}
@@ -126,7 +126,7 @@ func VerifyV4Signature(root RootUserConfig, iam auth.IAMService, region string, 
 			return s3err.GetAPIError(s3err.ErrInvalidSHA256PayloadUsage)
 		}
 
-		canonicalString, err := utils.CheckValidSignature(ctx, authData, account.Secret, hashPayload, tdate, contentLength)
+		canonicalString, err := utils.CheckValidSignature(ctx, authData, signingCred(account), hashPayload, tdate, contentLength)
 		if err != nil {
 			return err
 		}
@@ -153,7 +153,7 @@ func VerifyV4Signature(root RootUserConfig, iam auth.IAMService, region string, 
 			if utils.IsStreamingPayload(hashPayload) {
 				wrapBodyReader(ctx, func(r io.Reader) io.Reader {
 					var cr io.Reader
-					cr, err = utils.NewChunkReader(ctx, r, authData, canonicalString, account.Secret, tdate)
+					cr, err = utils.NewChunkReader(ctx, r, authData, canonicalString, signingCred(account), tdate)
 					return cr
 				})
 				if err != nil {
@@ -196,7 +196,18 @@ type accounts struct {
 	iam  auth.IAMService
 }
 
-func (a accounts) getAccount(access string) (auth.Account, error) {
+// RequestIAMService is an optional interface an auth.IAMService may
+// implement when resolving an account needs the incoming request — e.g.
+// when the backing store holds secrets externally and an authorizer
+// derives a request-scoped signing key (auth.Account.SigningKey) from the
+// request's credential scope. When implemented, it is used instead of
+// GetUserAccount for request authentication lookups; the admin APIs and
+// other non-request paths still use the base IAMService methods.
+type RequestIAMService interface {
+	GetUserAccountForRequest(ctx fiber.Ctx, access string) (auth.Account, error)
+}
+
+func (a accounts) getAccount(ctx fiber.Ctx, access string) (auth.Account, error) {
 	if access == a.root.Access {
 		return auth.Account{
 			Access: a.root.Access,
@@ -205,5 +216,19 @@ func (a accounts) getAccount(access string) (auth.Account, error) {
 		}, nil
 	}
 
+	if riam, ok := a.iam.(RequestIAMService); ok {
+		return riam.GetUserAccountForRequest(ctx, access)
+	}
+
 	return a.iam.GetUserAccount(access)
+}
+
+// signingCred returns the account's credential material for signature
+// verification: the pre-derived signing key when the account carries one,
+// else the raw secret.
+func signingCred(account auth.Account) utils.SigningCred {
+	return utils.SigningCred{
+		Secret:     account.Secret,
+		SigningKey: account.SigningKey,
+	}
 }

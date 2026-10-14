@@ -79,8 +79,27 @@ type HTTPSigner interface {
 	SignHTTP(ctx context.Context, credentials aws.Credentials, r *http.Request, payloadHash string, service string, region string, signingTime time.Time, optFns ...func(*SignerOptions)) error
 }
 
-type keyDerivator interface {
+// KeyDerivator derives the SigV4 signing key the signature is computed
+// with. Implementations may ignore the credentials and return a key derived
+// elsewhere (see StaticKeyDerivator).
+type KeyDerivator interface {
 	DeriveKey(credential aws.Credentials, service, region string, signingTime v4Internal.SigningTime) []byte
+}
+
+// StaticKeyDerivator returns a KeyDerivator that always returns key,
+// ignoring the credentials. Use it to sign or verify with a pre-derived
+// SigV4 signing key (the AWS4 HMAC chain already folded over the
+// credential scope) when the raw secret key is not available. The caller
+// is responsible for matching the key's credential scope (date, region,
+// service) to the request being signed.
+func StaticKeyDerivator(key []byte) KeyDerivator {
+	return staticKeyDerivator{key: key}
+}
+
+type staticKeyDerivator struct{ key []byte }
+
+func (d staticKeyDerivator) DeriveKey(aws.Credentials, string, string, v4Internal.SigningTime) []byte {
+	return d.key
 }
 
 type SignMetadata struct {
@@ -117,13 +136,19 @@ type SignerOptions struct {
 	// through X-Amz-Security-Token. This is needed for variations of v4 that
 	// present the token elsewhere.
 	DisableSessionToken bool
+
+	// KeyDerivator overrides how the signing key is derived from the
+	// credentials. When nil, the standard derivation (the AWS4 HMAC chain
+	// over the secret key) is used. Set it (e.g. to a StaticKeyDerivator)
+	// to sign or verify with an externally derived signing key.
+	KeyDerivator KeyDerivator
 }
 
 // Signer applies AWS v4 signing to given request. Use this to sign requests
 // that need to be signed with AWS V4 Signatures.
 type Signer struct {
 	options      SignerOptions
-	keyDerivator keyDerivator
+	keyDerivator KeyDerivator
 }
 
 // NewSigner returns a new SigV4 Signer
@@ -134,7 +159,21 @@ func NewSigner(optFns ...func(signer *SignerOptions)) *Signer {
 		fn(&options)
 	}
 
-	return &Signer{options: options, keyDerivator: v4Internal.NewSigningKeyDeriver()}
+	keyDerivator := options.KeyDerivator
+	if keyDerivator == nil {
+		keyDerivator = v4Internal.NewSigningKeyDeriver()
+	}
+
+	return &Signer{options: options, keyDerivator: keyDerivator}
+}
+
+// resolveKeyDerivator returns the per-call KeyDerivator override when one
+// was passed in the sign call's options, else the signer's default.
+func (s *Signer) resolveKeyDerivator(options SignerOptions) KeyDerivator {
+	if options.KeyDerivator != nil {
+		return options.KeyDerivator
+	}
+	return s.keyDerivator
 }
 
 type httpSigner struct {
@@ -143,7 +182,7 @@ type httpSigner struct {
 	Region       string
 	Time         v4Internal.SigningTime
 	Credentials  aws.Credentials
-	KeyDerivator keyDerivator
+	KeyDerivator KeyDerivator
 	IsPreSign    bool
 	SignedHdrs   []string
 
@@ -301,7 +340,7 @@ func (s Signer) SignHTTP(ctx context.Context, credentials aws.Credentials, r *ht
 		DisableHeaderHoisting:  options.DisableHeaderHoisting,
 		DisableURIPathEscaping: options.DisableURIPathEscaping,
 		DisableSessionToken:    options.DisableSessionToken,
-		KeyDerivator:           s.keyDerivator,
+		KeyDerivator:           s.resolveKeyDerivator(options),
 		SignedHdrs:             signedHdrs,
 	}
 
@@ -383,7 +422,7 @@ func (s *Signer) PresignHTTP(
 		DisableHeaderHoisting:  options.DisableHeaderHoisting,
 		DisableURIPathEscaping: options.DisableURIPathEscaping,
 		DisableSessionToken:    options.DisableSessionToken,
-		KeyDerivator:           s.keyDerivator,
+		KeyDerivator:           s.resolveKeyDerivator(options),
 		SignedHdrs:             signedHdrs,
 	}
 
