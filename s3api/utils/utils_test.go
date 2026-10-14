@@ -611,6 +611,34 @@ func TestFilterObjectAttributes(t *testing.T) {
 			want: s3response.GetObjectAttributesResponse{ETag: &etag},
 		},
 		{
+			name: "drop Blake3 when not requested",
+			args: args{
+				attrs: map[s3response.ObjectAttributes]struct{}{
+					s3response.ObjectAttributesEtag: {},
+				},
+				output: s3response.GetObjectAttributesResponse{
+					ETag:   &etag,
+					Blake3: &s3response.Blake3Tree{CID: "bafkr4i", ChunkLog: 12, Outboard: "AAAAAAAAAAA="},
+				},
+			},
+			want: s3response.GetObjectAttributesResponse{ETag: &etag},
+		},
+		{
+			name: "keep Blake3 when requested",
+			args: args{
+				attrs: map[s3response.ObjectAttributes]struct{}{
+					s3response.ObjectAttributesBlake3: {},
+				},
+				output: s3response.GetObjectAttributesResponse{
+					ETag:   &etag,
+					Blake3: &s3response.Blake3Tree{CID: "bafkr4i", ChunkLog: 12, Outboard: "AAAAAAAAAAA="},
+				},
+			},
+			want: s3response.GetObjectAttributesResponse{
+				Blake3: &s3response.Blake3Tree{CID: "bafkr4i", ChunkLog: 12, Outboard: "AAAAAAAAAAA="},
+			},
+		},
+		{
 			name: "keep multiple props",
 			args: args{
 				attrs: map[s3response.ObjectAttributes]struct{}{
