@@ -580,7 +580,7 @@ func Authentication_sigv2_not_supported(s *S3Conf) error {
 		}
 
 		req.Header.Del("Authorization")
-		req.Header.Set("Authorization", "AWS seed_signature")
+		req.Header.Set("Authorization", "AWS AKIAIOSFODNN7EXAMPLE:frJIUN8DYpKDtOLCwo//yllqDzg=")
 
 		resp, err := s.httpClient.Do(req)
 		if err != nil {
@@ -592,6 +592,27 @@ func Authentication_sigv2_not_supported(s *S3Conf) error {
 		}
 
 		return teardown(s, bucket)
+	})
+}
+
+func Authentication_sigv2_malformed(s *S3Conf) error {
+	testName := "Authentication_sigv2_malformed"
+	return authHandler(s, &authConfig{
+		testName: testName,
+		method:   http.MethodGet,
+		service:  "s3",
+		date:     time.Now(),
+	}, func(req *http.Request) error {
+		// SigV2 is "AWS <AccessKeyId>:<Signature>"; without the ":" AWS rejects
+		// the header itself rather than the signature version
+		req.Header.Set("Authorization", "AWS seed_signature")
+
+		resp, err := s.httpClient.Do(req)
+		if err != nil {
+			return err
+		}
+
+		return checkHTTPResponseApiErr(resp, s3err.GetInvalidArgumentErr(s3err.InvalidArgSigV2AuthHeader, "AWS seed_signature"))
 	})
 }
 
