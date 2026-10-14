@@ -91,6 +91,11 @@ type Backend interface {
 	PutObjectTagging(_ context.Context, bucket, object, versionId string, tags map[string]string) error
 	DeleteObjectTagging(_ context.Context, bucket, object, versionId string) error
 
+	// bucket encryption operations
+	PutBucketEncryption(_ context.Context, bucket string, config s3response.ServerSideEncryptionConfiguration) error
+	GetBucketEncryption(_ context.Context, bucket string) (s3response.ServerSideEncryptionConfiguration, error)
+	DeleteBucketEncryption(_ context.Context, bucket string) error
+
 	// object lock operations
 	PutObjectLockConfiguration(_ context.Context, bucket string, config []byte) error
 	GetObjectLockConfiguration(_ context.Context, bucket string) ([]byte, error)
@@ -274,6 +279,16 @@ func (BackendUnsupported) PutObjectTagging(_ context.Context, bucket, object, ve
 	return s3err.GetAPIError(s3err.ErrNotImplemented)
 }
 func (BackendUnsupported) DeleteObjectTagging(_ context.Context, bucket, object, versionId string) error {
+	return s3err.GetAPIError(s3err.ErrNotImplemented)
+}
+
+func (BackendUnsupported) PutBucketEncryption(_ context.Context, bucket string, config s3response.ServerSideEncryptionConfiguration) error {
+	return s3err.GetAPIError(s3err.ErrNotImplemented)
+}
+func (BackendUnsupported) GetBucketEncryption(_ context.Context, bucket string) (s3response.ServerSideEncryptionConfiguration, error) {
+	return s3response.ServerSideEncryptionConfiguration{}, s3err.GetAPIError(s3err.ErrNotImplemented)
+}
+func (BackendUnsupported) DeleteBucketEncryption(_ context.Context, bucket string) error {
 	return s3err.GetAPIError(s3err.ErrNotImplemented)
 }
 

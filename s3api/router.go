@@ -304,7 +304,7 @@ func (sa *S3ApiRouter) Init() {
 	bucketRouter.Put("",
 		middlewares.MatchQueryArgs("encryption"),
 		controllers.ProcessHandlers(
-			ctrl.HandleErrorRoute(s3err.GetAPIError(s3err.ErrNotImplemented)),
+			ctrl.PutBucketEncryption,
 			metrics.ActionPutBucketEncryption,
 			services,
 			objNameValidator,
@@ -579,7 +579,7 @@ func (sa *S3ApiRouter) Init() {
 	bucketRouter.Delete("",
 		middlewares.MatchQueryArgs("encryption"),
 		controllers.ProcessHandlers(
-			ctrl.HandleErrorRoute(s3err.GetAPIError(s3err.ErrNotImplemented)),
+			ctrl.DeleteBucketEncryption,
 			metrics.ActionDeleteBucketEncryption,
 			services,
 			objNameValidator,
@@ -880,7 +880,7 @@ func (sa *S3ApiRouter) Init() {
 	bucketRouter.Get("",
 		middlewares.MatchQueryArgs("encryption"),
 		controllers.ProcessHandlers(
-			ctrl.HandleErrorRoute(s3err.GetAPIError(s3err.ErrNotImplemented)),
+			ctrl.GetBucketEncryption,
 			metrics.ActionGetBucketEncryption,
 			services,
 			objNameValidator,

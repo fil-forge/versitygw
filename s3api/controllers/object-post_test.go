@@ -318,8 +318,9 @@ func TestS3ApiController_CreateMultipartUpload(t *testing.T) {
 				response: &Response{
 					Data: s3response.InitiateMultipartUploadResult{},
 					Headers: map[string]*string{
-						"x-amz-checksum-algorithm": utils.ConvertToStringPtr(types.ChecksumAlgorithmCrc32),
-						"x-amz-checksum-type":      utils.ConvertToStringPtr(types.ChecksumTypeComposite),
+						"x-amz-checksum-algorithm":     utils.ConvertToStringPtr(types.ChecksumAlgorithmCrc32),
+						"x-amz-checksum-type":          utils.ConvertToStringPtr(types.ChecksumTypeComposite),
+						"x-amz-server-side-encryption": nil,
 					},
 					MetaOpts: &MetaOptions{
 						BucketOwner: "root",
@@ -518,7 +519,8 @@ func TestS3ApiController_CompleteMultipartUpload(t *testing.T) {
 				response: &Response{
 					Data: s3response.CompleteMultipartUploadResult{},
 					Headers: map[string]*string{
-						"x-amz-version-id": &versionId,
+						"x-amz-version-id":             &versionId,
+						"x-amz-server-side-encryption": nil,
 					},
 					MetaOpts: &MetaOptions{
 						BucketOwner: "root",
@@ -550,7 +552,8 @@ func TestS3ApiController_CompleteMultipartUpload(t *testing.T) {
 						Location: utils.GetStringPtr("http://example.com/bucket/object"),
 					},
 					Headers: map[string]*string{
-						"x-amz-version-id": &versionId,
+						"x-amz-version-id":             &versionId,
+						"x-amz-server-side-encryption": nil,
 					},
 					MetaOpts: &MetaOptions{
 						BucketOwner: "root",
@@ -576,7 +579,8 @@ func TestS3ApiController_CompleteMultipartUpload(t *testing.T) {
 						Location: utils.GetStringPtr("http://example.com/bucket/object"),
 					},
 					Headers: map[string]*string{
-						"x-amz-version-id": &versionId,
+						"x-amz-version-id":             &versionId,
+						"x-amz-server-side-encryption": nil,
 					},
 					MetaOpts: &MetaOptions{
 						BucketOwner: "root",

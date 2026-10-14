@@ -1232,3 +1232,106 @@ func TestS3ApiController_PutBucketAcl(t *testing.T) {
 		})
 	}
 }
+
+func TestS3ApiController_PutBucketEncryption(t *testing.T) {
+	validBody, err := xml.Marshal(s3response.ServerSideEncryptionConfiguration{
+		Rules: []s3response.ServerSideEncryptionRule{{
+			ApplyServerSideEncryptionByDefault: &s3response.ServerSideEncryptionByDefault{
+				SSEAlgorithm: types.ServerSideEncryptionAes256,
+			},
+		}},
+	})
+	assert.NoError(t, err)
+
+	tests := []struct {
+		name   string
+		input  testInput
+		output testOutput
+	}{
+		{
+			name: "verify access fails",
+			input: testInput{
+				locals: accessDeniedLocals,
+			},
+			output: testOutput{
+				response: &Response{
+					MetaOpts: &MetaOptions{
+						BucketOwner: "root",
+					},
+				},
+				err: s3err.GetAPIError(s3err.ErrAccessDenied),
+			},
+		},
+		{
+			name: "invalid request body",
+			input: testInput{
+				locals: defaultLocals,
+				body:   []byte("invalid_body"),
+			},
+			output: testOutput{
+				response: &Response{
+					MetaOpts: &MetaOptions{
+						BucketOwner: "root",
+					},
+				},
+				err: s3err.GetAPIError(s3err.ErrMalformedXML),
+			},
+		},
+		{
+			name: "backend returns error",
+			input: testInput{
+				locals: defaultLocals,
+				beErr:  s3err.GetAPIError(s3err.ErrNoSuchBucket),
+				body:   validBody,
+			},
+			output: testOutput{
+				response: &Response{
+					MetaOpts: &MetaOptions{
+						BucketOwner: "root",
+					},
+				},
+				err: s3err.GetAPIError(s3err.ErrNoSuchBucket),
+			},
+		},
+		{
+			name: "successful response",
+			input: testInput{
+				locals: defaultLocals,
+				body:   validBody,
+			},
+			output: testOutput{
+				response: &Response{
+					MetaOpts: &MetaOptions{
+						BucketOwner: "root",
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			be := &BackendMock{
+				PutBucketEncryptionFunc: func(contextMoqParam context.Context, bucket string, config s3response.ServerSideEncryptionConfiguration) error {
+					return tt.input.beErr
+				},
+				GetBucketPolicyFunc: func(contextMoqParam context.Context, bucket string) ([]byte, error) {
+					return nil, s3err.GetAPIError(s3err.ErrAccessDenied)
+				},
+			}
+
+			ctrl := S3ApiController{
+				be: be,
+			}
+
+			testController(
+				t,
+				ctrl.PutBucketEncryption,
+				tt.output.response,
+				tt.output.err,
+				ctxInputs{
+					locals: tt.input.locals,
+					body:   tt.input.body,
+				})
+		})
+	}
+}
