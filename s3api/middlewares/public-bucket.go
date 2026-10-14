@@ -20,12 +20,12 @@ import (
 	"io"
 	"strings"
 
+	"github.com/fil-forge/versitygw/auth"
+	"github.com/fil-forge/versitygw/backend"
+	"github.com/fil-forge/versitygw/metrics"
+	"github.com/fil-forge/versitygw/s3api/utils"
+	"github.com/fil-forge/versitygw/s3err"
 	"github.com/gofiber/fiber/v3"
-	"github.com/versity/versitygw/auth"
-	"github.com/versity/versitygw/backend"
-	"github.com/versity/versitygw/metrics"
-	"github.com/versity/versitygw/s3api/utils"
-	"github.com/versity/versitygw/s3err"
 )
 
 // AuthorizePublicBucketAccess checks if the bucket grants public

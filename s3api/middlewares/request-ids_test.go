@@ -20,9 +20,9 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
-	"github.com/versity/versitygw/s3api/utils"
 )
 
 func TestRequestIDs(t *testing.T) {

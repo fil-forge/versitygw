@@ -17,7 +17,7 @@ package integration
 import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 func PutBucketVersioning_non_existing_bucket(s *S3Conf) error {

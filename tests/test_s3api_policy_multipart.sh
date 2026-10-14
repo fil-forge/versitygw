@@ -98,7 +98,7 @@ test_s3api_policy_list_multipart_uploads() {
 
 test_s3api_policy_list_upload_parts() {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1202"
+    skip "https://github.com/fil-forge/versitygw/issues/1202"
   fi
   policy_file="policy_file"
   test_file="test_file"

@@ -15,8 +15,8 @@
 package middlewares
 
 import (
+	"github.com/fil-forge/versitygw/debuglogger"
 	"github.com/gofiber/fiber/v3"
-	"github.com/versity/versitygw/debuglogger"
 )
 
 func DebugLogger() fiber.Handler {

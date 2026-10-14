@@ -18,8 +18,8 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 
+	"github.com/fil-forge/versitygw/debuglogger"
 	"github.com/gofiber/fiber/v3"
-	"github.com/versity/versitygw/debuglogger"
 )
 
 const (

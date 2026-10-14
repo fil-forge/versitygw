@@ -17,9 +17,9 @@ package s3api
 import (
 	"testing"
 
+	"github.com/fil-forge/versitygw/auth"
+	"github.com/fil-forge/versitygw/backend"
 	"github.com/gofiber/fiber/v3"
-	"github.com/versity/versitygw/auth"
-	"github.com/versity/versitygw/backend"
 )
 
 func TestS3ApiRouter_Init(t *testing.T) {

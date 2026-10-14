@@ -24,7 +24,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 func TestUnsignedChunkReaderStreamsLargeChunkWithoutBuffering(t *testing.T) {

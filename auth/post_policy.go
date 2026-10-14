@@ -24,8 +24,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/versity/versitygw/debuglogger"
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/debuglogger"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 const (

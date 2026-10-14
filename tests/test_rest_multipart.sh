@@ -64,7 +64,7 @@ source ./tests/drivers/upload_part/upload_part_rest.sh
 # tags: curl,multipart,CompleteMultipartUpload,invalid-header,ETag
 @test "REST - complete upload - invalid part" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/1008"
+    skip "https://github.com/fil-forge/versitygw/issues/1008"
   fi
   run get_bucket_name "$BUCKET_ONE_NAME"
   assert_success
@@ -467,7 +467,7 @@ source ./tests/drivers/upload_part/upload_part_rest.sh
 
 @test "REST - multipart - empty upload ID on completion" {
   if [ "$DIRECT" != "true" ]; then
-    skip "https://github.com/versity/versitygw/issues/2146"
+    skip "https://github.com/fil-forge/versitygw/issues/2146"
   fi
   run setup_bucket_and_large_file_v3 "$BUCKET_ONE_NAME"
   assert_success

@@ -20,10 +20,10 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	v4 "github.com/fil-forge/versitygw/aws/signer/v4"
 	"github.com/gofiber/fiber/v3"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttputil"
-	v4 "github.com/versity/versitygw/aws/signer/v4"
 )
 
 func TestAuthParse(t *testing.T) {

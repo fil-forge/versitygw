@@ -21,7 +21,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/versity/versitygw/s3err"
+	"github.com/fil-forge/versitygw/s3err"
 )
 
 func TestMpUploadMetadataRawGzipRoundTrip(t *testing.T) {

@@ -18,8 +18,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/fil-forge/versitygw/debuglogger"
 	"github.com/gofiber/fiber/v3"
-	"github.com/versity/versitygw/debuglogger"
 )
 
 // ConditionalHeaders holds the conditional header values

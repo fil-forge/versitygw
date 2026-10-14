@@ -23,8 +23,8 @@ import (
 	"sync"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/fil-forge/versitygw/debuglogger"
 	"github.com/go-ldap/ldap/v3"
-	"github.com/versity/versitygw/debuglogger"
 )
 
 type LdapIAMService struct {

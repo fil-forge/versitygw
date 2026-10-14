@@ -8,8 +8,8 @@ import (
 	"context"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/versity/versitygw/backend"
-	"github.com/versity/versitygw/s3response"
+	"github.com/fil-forge/versitygw/backend"
+	"github.com/fil-forge/versitygw/s3response"
 	"sync"
 )
 
