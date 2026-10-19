@@ -629,6 +629,23 @@ func TestParseObjectAttributes(t *testing.T) {
 			wantErr: s3err.GetInvalidArgumentErr(s3err.InvalidArgObjectAttributes, "ETag,Unknown"),
 		},
 		{
+			// A trailing comma leaves an empty name, which trimming does not
+			// turn into a valid one.
+			name:    "trailing comma",
+			header:  "ETag,",
+			wantErr: s3err.GetInvalidArgumentErr(s3err.InvalidArgObjectAttributes, "ETag,"),
+		},
+		{
+			name:    "consecutive commas",
+			header:  "ETag,,ObjectSize",
+			wantErr: s3err.GetInvalidArgumentErr(s3err.InvalidArgObjectAttributes, "ETag,,ObjectSize"),
+		},
+		{
+			name:    "only whitespace",
+			header:  "   ",
+			wantErr: s3err.GetInvalidArgumentErr(s3err.InvalidArgObjectAttributes, "   "),
+		},
+		{
 			name:    "empty header",
 			header:  "",
 			wantErr: s3err.GetAPIError(s3err.ErrObjectAttributesInvalidHeader),
