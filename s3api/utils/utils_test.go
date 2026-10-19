@@ -583,6 +583,75 @@ func TestParseMaxLimiter(t *testing.T) {
 	}
 }
 
+func TestParseObjectAttributes(t *testing.T) {
+	app := fiber.New()
+	newCtx := func(header string) fiber.Ctx {
+		ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+		ctx.Request().Header.Set("X-Amz-Object-Attributes", header)
+		return ctx
+	}
+
+	tests := []struct {
+		name    string
+		header  string
+		want    map[s3response.ObjectAttributes]struct{}
+		wantErr error
+	}{
+		{
+			name:   "single attribute",
+			header: "ETag",
+			want:   map[s3response.ObjectAttributes]struct{}{s3response.ObjectAttributesEtag: {}},
+		},
+		{
+			name:   "comma separated",
+			header: "ETag,ObjectSize",
+			want: map[s3response.ObjectAttributes]struct{}{
+				s3response.ObjectAttributesEtag:       {},
+				s3response.ObjectAttributesObjectSize: {},
+			},
+		},
+		{
+			// The JavaScript SDK joins the list with ", "; AWS accepts it.
+			name:   "comma and space separated",
+			header: "ETag, ObjectSize, Blake3",
+			want: map[s3response.ObjectAttributes]struct{}{
+				s3response.ObjectAttributesEtag:       {},
+				s3response.ObjectAttributesObjectSize: {},
+				s3response.ObjectAttributesBlake3:     {},
+			},
+		},
+		{
+			name:   "space before the comma",
+			header: "ETag ,ObjectSize",
+			want: map[s3response.ObjectAttributes]struct{}{
+				s3response.ObjectAttributesEtag:       {},
+				s3response.ObjectAttributesObjectSize: {},
+			},
+		},
+		{
+			name:    "unknown attribute",
+			header:  "ETag,Unknown",
+			wantErr: s3err.GetInvalidArgumentErr(s3err.InvalidArgObjectAttributes, "ETag,Unknown"),
+		},
+		{
+			name:    "empty header",
+			header:  "",
+			wantErr: s3err.GetAPIError(s3err.ErrObjectAttributesInvalidHeader),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseObjectAttributes(newCtx(tt.header))
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Fatalf("ParseObjectAttributes() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParseObjectAttributes() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestFilterObjectAttributes(t *testing.T) {
 	type args struct {
 		attrs  map[s3response.ObjectAttributes]struct{}
