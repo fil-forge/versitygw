@@ -585,11 +585,6 @@ func TestParseMaxLimiter(t *testing.T) {
 
 func TestParseObjectAttributes(t *testing.T) {
 	app := fiber.New()
-	newCtx := func(header string) fiber.Ctx {
-		ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-		ctx.Request().Header.Set("X-Amz-Object-Attributes", header)
-		return ctx
-	}
 
 	tests := []struct {
 		name    string
@@ -641,8 +636,12 @@ func TestParseObjectAttributes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseObjectAttributes(newCtx(tt.header))
-			if !reflect.DeepEqual(err, tt.wantErr) {
+			ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+			defer app.ReleaseCtx(ctx)
+			ctx.Request().Header.Set("X-Amz-Object-Attributes", tt.header)
+
+			got, err := ParseObjectAttributes(ctx)
+			if !errors.Is(err, tt.wantErr) {
 				t.Fatalf("ParseObjectAttributes() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(got, tt.want) {
