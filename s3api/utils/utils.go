@@ -463,7 +463,7 @@ func ParseObjectAttributes(ctx fiber.Ctx) (map[s3response.ObjectAttributes]struc
 			}
 			oattrs := strings.SplitSeq(string(value), ",")
 			for a := range oattrs {
-				attr := s3response.ObjectAttributes(a)
+				attr := s3response.ObjectAttributes(strings.TrimSpace(a))
 				if !attr.IsValid() {
 					debuglogger.Logf("invalid object attribute: %v\n", attr)
 					err = s3err.GetInvalidArgumentErr(s3err.InvalidArgObjectAttributes, string(value))
