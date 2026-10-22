@@ -290,9 +290,10 @@ func WithMpMaxParts(n int) Option {
 // place, ends the body. It commits when the backend reports the response
 // headers (backend.CompleteMultipartUploadReporter), with x-amz-version-id
 // and x-amz-server-side-encryption, or for any other backend once the
-// completion has run for interval, without them. The completion keeps its
-// slot under the request limit until it finishes. A completion that finishes before the
-// commit is answered as usual. Zero or negative leaves it off.
+// completion has run for interval, without them. A completion that
+// finishes before the commit is answered as usual. Either way, the
+// completion keeps its slot under the request limit until it finishes.
+// Zero or negative leaves the keepalive off.
 func WithCompleteMultipartKeepalive(interval time.Duration) Option {
 	return func(s *S3ApiServer) { s.Router.completeMpKeepalive = interval }
 }

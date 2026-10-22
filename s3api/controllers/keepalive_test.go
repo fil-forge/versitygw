@@ -335,6 +335,21 @@ func TestCompleteMultipartUploadKeepalive_AuditsTheOutcome(t *testing.T) {
 	assert.Equal(t, []auditRecord{{Action: metrics.ActionCompleteMultipartUpload, Err: backendErr}}, srv.shutDown(t))
 }
 
+// A backend panic is audited as a plain InternalError: its stack goes to
+// the server's log, not into the audit record.
+func TestCompleteMultipartUploadKeepalive_AuditsAPanicWithoutItsStack(t *testing.T) {
+	srv := startKeepaliveServer(t, func(context.Context) (s3response.CompleteMultipartUploadResult, string, error) {
+		time.Sleep(slowCompletion)
+		panic("boom")
+	})
+	resp, err := srv.client.Do(completeRequest(t))
+	require.NoError(t, err)
+	_, _ = io.Copy(io.Discard, resp.Body)
+	resp.Body.Close()
+
+	assert.Equal(t, []auditRecord{{Action: metrics.ActionCompleteMultipartUpload, Err: s3err.GetAPIError(s3err.ErrInternalError)}}, srv.shutDown(t))
+}
+
 func TestCompleteMultipartUploadKeepalive_OutlivesADisconnectedClient(t *testing.T) {
 	release := make(chan struct{})
 	var completed atomic.Bool

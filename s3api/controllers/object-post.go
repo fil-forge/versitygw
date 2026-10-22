@@ -448,11 +448,14 @@ func (c S3ApiController) completeMultipartUploadWithKeepalive(ctx fiber.Ctx, inp
 		var out pendingOutcome
 		// Past the keepalive interval nothing recovers this goroutine's
 		// panic: turn it into an InternalError instead of a crashed server.
+		// The stack goes to the server's log, not into the error the metrics
+		// and audit log record.
 		defer func() {
 			if r := recover(); r != nil {
+				debuglogger.Panic(fmt.Errorf("panic in CompleteMultipartUpload: %v\n%s", r, debug.Stack()))
 				out = pendingOutcome{
 					response: &Response{MetaOpts: &MetaOptions{BucketOwner: owner}},
-					err:      fmt.Errorf("panic in CompleteMultipartUpload: %v\n%s", r, debug.Stack()),
+					err:      s3err.GetAPIError(s3err.ErrInternalError),
 				}
 			}
 			outcome <- out
