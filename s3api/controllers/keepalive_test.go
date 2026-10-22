@@ -139,7 +139,7 @@ func TestCompleteMultipartUploadKeepalive_Responses(t *testing.T) {
 		},
 		{
 			name: "a slow completion carries the encryption it reports",
-			report: reportHeadersAfter(0, backend.CompleteMultipartUploadReport{VersionID: "version-1", ServerSideEncryption: types.ServerSideEncryptionAes256},
+			report: reportHeadersAfter(0, backend.CompleteMultipartUploadHeaders{VersionID: "version-1", ServerSideEncryption: types.ServerSideEncryptionAes256},
 				func(ctx context.Context) (s3response.CompleteMultipartUploadResult, string, error) {
 					res, versid, err := completeAfter(slowCompletion, keepaliveETag, nil)(ctx)
 					res.ServerSideEncryption = types.ServerSideEncryptionAes256
@@ -187,7 +187,7 @@ func TestCompleteMultipartUploadKeepalive_Responses(t *testing.T) {
 		},
 		{
 			name: "a completion that fails before reporting keeps its status",
-			report: func(ctx context.Context, _ func(backend.CompleteMultipartUploadReport)) (s3response.CompleteMultipartUploadResult, string, error) {
+			report: func(ctx context.Context, _ func(backend.CompleteMultipartUploadHeaders)) (s3response.CompleteMultipartUploadResult, string, error) {
 				return completeAfter(slowCompletion, "", s3err.GetAPIError(s3err.ErrNoSuchUpload))(ctx)
 			},
 			want: streamedResponse{
@@ -260,8 +260,8 @@ func TestCompleteMultipartUploadKeepalive_Responses(t *testing.T) {
 // completeFunc is a backend's CompleteMultipartUpload.
 type completeFunc func(context.Context) (s3response.CompleteMultipartUploadResult, string, error)
 
-// reportingFunc is a backend's CompleteMultipartUploadReportingVersionID.
-type reportingFunc func(ctx context.Context, report func(backend.CompleteMultipartUploadReport)) (s3response.CompleteMultipartUploadResult, string, error)
+// reportingFunc is a backend's CompleteMultipartUploadReportingHeaders.
+type reportingFunc func(ctx context.Context, report func(backend.CompleteMultipartUploadHeaders)) (s3response.CompleteMultipartUploadResult, string, error)
 
 // completeAfter returns a completion that takes delay and then succeeds
 // with etag and version id "version-1", or fails with err.
@@ -283,12 +283,12 @@ func completeAfterAs(delay time.Duration, etag, versionID string, err error) com
 // reportAfter returns a completion that reports versionID after delay and
 // then runs complete.
 func reportAfter(delay time.Duration, versionID string, complete completeFunc) reportingFunc {
-	return reportHeadersAfter(delay, backend.CompleteMultipartUploadReport{VersionID: versionID}, complete)
+	return reportHeadersAfter(delay, backend.CompleteMultipartUploadHeaders{VersionID: versionID}, complete)
 }
 
 // reportHeadersAfter is reportAfter with a whole report.
-func reportHeadersAfter(delay time.Duration, headers backend.CompleteMultipartUploadReport, complete completeFunc) reportingFunc {
-	return func(ctx context.Context, report func(backend.CompleteMultipartUploadReport)) (s3response.CompleteMultipartUploadResult, string, error) {
+func reportHeadersAfter(delay time.Duration, headers backend.CompleteMultipartUploadHeaders, complete completeFunc) reportingFunc {
+	return func(ctx context.Context, report func(backend.CompleteMultipartUploadHeaders)) (s3response.CompleteMultipartUploadResult, string, error) {
 		time.Sleep(delay)
 		report(headers)
 		return complete(ctx)
@@ -398,8 +398,8 @@ func TestCompleteMultipartUploadKeepalive_SDKClient(t *testing.T) {
 func TestCompleteMultipartUploadKeepalive_HoldsTheRequestPermit(t *testing.T) {
 	release := make(chan struct{})
 	var calls atomic.Int32
-	srv := serveKeepalive(t, &reportingBackend{BackendMock: keepaliveBackend(nil), complete: func(ctx context.Context, report func(backend.CompleteMultipartUploadReport)) (s3response.CompleteMultipartUploadResult, string, error) {
-		report(backend.CompleteMultipartUploadReport{VersionID: "version-1"})
+	srv := serveKeepalive(t, &reportingBackend{BackendMock: keepaliveBackend(nil), complete: func(ctx context.Context, report func(backend.CompleteMultipartUploadHeaders)) (s3response.CompleteMultipartUploadResult, string, error) {
+		report(backend.CompleteMultipartUploadHeaders{VersionID: "version-1"})
 		if calls.Add(1) == 1 {
 			<-release
 		}
@@ -463,7 +463,7 @@ type reportingBackend struct {
 	complete reportingFunc
 }
 
-func (b *reportingBackend) CompleteMultipartUploadReportingVersionID(ctx context.Context, _ *s3.CompleteMultipartUploadInput, report func(backend.CompleteMultipartUploadReport)) (s3response.CompleteMultipartUploadResult, string, error) {
+func (b *reportingBackend) CompleteMultipartUploadReportingHeaders(ctx context.Context, _ *s3.CompleteMultipartUploadInput, report func(backend.CompleteMultipartUploadHeaders)) (s3response.CompleteMultipartUploadResult, string, error) {
 	return b.complete(ctx, report)
 }
 

@@ -461,7 +461,7 @@ func (c S3ApiController) completeMultipartUploadWithKeepalive(ctx fiber.Ctx, inp
 		var versid string
 		var err error
 		if reporting {
-			res, versid, err = reporter.CompleteMultipartUploadReportingVersionID(bctx, input, report.report)
+			res, versid, err = reporter.CompleteMultipartUploadReportingHeaders(bctx, input, report.report)
 			report.check(res, versid, err)
 		} else {
 			res, versid, err = c.be.CompleteMultipartUpload(bctx, input)
@@ -472,7 +472,7 @@ func (c S3ApiController) completeMultipartUploadWithKeepalive(ctx fiber.Ctx, inp
 		}
 	}()
 
-	var headers backend.CompleteMultipartUploadReport
+	var headers backend.CompleteMultipartUploadHeaders
 	if reporting {
 		select {
 		case out := <-outcome:

@@ -203,7 +203,7 @@ type completeReport struct {
 	done chan struct{}
 	// headers is the first report. It is set before done closes and never
 	// changes after.
-	headers backend.CompleteMultipartUploadReport
+	headers backend.CompleteMultipartUploadHeaders
 }
 
 func newCompleteReport() *completeReport {
@@ -211,7 +211,7 @@ func newCompleteReport() *completeReport {
 }
 
 // report records the backend's report. Only the first counts.
-func (r *completeReport) report(headers backend.CompleteMultipartUploadReport) {
+func (r *completeReport) report(headers backend.CompleteMultipartUploadHeaders) {
 	r.once.Do(func() {
 		r.headers = headers
 		close(r.done)
