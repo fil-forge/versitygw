@@ -17,12 +17,15 @@ package controllers
 import (
 	"encoding/xml"
 	"fmt"
+	"runtime/debug"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/fil-forge/versitygw/auth"
+	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/debuglogger"
 	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/fil-forge/versitygw/s3err"
@@ -397,32 +400,115 @@ func (c S3ApiController) CompleteMultipartUpload(ctx fiber.Ctx) (*Response, erro
 		}, err
 	}
 
-	res, versid, err := c.be.CompleteMultipartUpload(ctx.RequestCtx(),
-		&s3.CompleteMultipartUploadInput{
-			Bucket:   &bucket,
-			Key:      &key,
-			UploadId: &uploadId,
-			MultipartUpload: &types.CompletedMultipartUpload{
-				Parts: body.Parts,
-			},
-			MpuObjectSize:     mpuObjectSize,
-			ChecksumCRC32:     utils.GetStringPtr(checksums[types.ChecksumAlgorithmCrc32]),
-			ChecksumCRC32C:    utils.GetStringPtr(checksums[types.ChecksumAlgorithmCrc32c]),
-			ChecksumSHA1:      utils.GetStringPtr(checksums[types.ChecksumAlgorithmSha1]),
-			ChecksumSHA256:    utils.GetStringPtr(checksums[types.ChecksumAlgorithmSha256]),
-			ChecksumCRC64NVME: utils.GetStringPtr(checksums[types.ChecksumAlgorithmCrc64nvme]),
-			ChecksumSHA512:    utils.GetStringPtr(checksums[types.ChecksumAlgorithmSha512]),
-			ChecksumMD5:       utils.GetStringPtr(checksums[types.ChecksumAlgorithmMd5]),
-			ChecksumXXHASH64:  utils.GetStringPtr(checksums[types.ChecksumAlgorithmXxhash64]),
-			ChecksumXXHASH3:   utils.GetStringPtr(checksums[types.ChecksumAlgorithmXxhash3]),
-			ChecksumXXHASH128: utils.GetStringPtr(checksums[types.ChecksumAlgorithmXxhash128]),
-			ChecksumType:      checksumType,
-			IfMatch:           ifMatch,
-			IfNoneMatch:       ifNoneMatch,
-		})
+	input := &s3.CompleteMultipartUploadInput{
+		Bucket:   &bucket,
+		Key:      &key,
+		UploadId: &uploadId,
+		MultipartUpload: &types.CompletedMultipartUpload{
+			Parts: body.Parts,
+		},
+		MpuObjectSize:     mpuObjectSize,
+		ChecksumCRC32:     utils.GetStringPtr(checksums[types.ChecksumAlgorithmCrc32]),
+		ChecksumCRC32C:    utils.GetStringPtr(checksums[types.ChecksumAlgorithmCrc32c]),
+		ChecksumSHA1:      utils.GetStringPtr(checksums[types.ChecksumAlgorithmSha1]),
+		ChecksumSHA256:    utils.GetStringPtr(checksums[types.ChecksumAlgorithmSha256]),
+		ChecksumCRC64NVME: utils.GetStringPtr(checksums[types.ChecksumAlgorithmCrc64nvme]),
+		ChecksumSHA512:    utils.GetStringPtr(checksums[types.ChecksumAlgorithmSha512]),
+		ChecksumMD5:       utils.GetStringPtr(checksums[types.ChecksumAlgorithmMd5]),
+		ChecksumXXHASH64:  utils.GetStringPtr(checksums[types.ChecksumAlgorithmXxhash64]),
+		ChecksumXXHASH3:   utils.GetStringPtr(checksums[types.ChecksumAlgorithmXxhash3]),
+		ChecksumXXHASH128: utils.GetStringPtr(checksums[types.ChecksumAlgorithmXxhash128]),
+		ChecksumType:      checksumType,
+		IfMatch:           ifMatch,
+		IfNoneMatch:       ifNoneMatch,
+	}
+	location := utils.GenerateObjectLocation(ctx, c.virtualDomain, bucket, key)
+	if c.completeMpKeepalive > 0 {
+		return c.completeMultipartUploadWithKeepalive(ctx, input, location, parsedAcl.Owner)
+	}
+	res, versid, err := c.be.CompleteMultipartUpload(ctx.RequestCtx(), input)
+	return completeMultipartResponse(res, versid, err, location, parsedAcl.Owner), err
+}
+
+// completeMultipartUploadWithKeepalive runs the backend's completion in the
+// background and streams its outcome as a pending response
+// (streamPending) once the response can commit to 200 OK. A backend that
+// reports its response headers early (backend.CompleteMultipartUploadReporter)
+// commits at the report, as S3 commits its early 200 with x-amz-version-id
+// and x-amz-server-side-encryption. Any other backend commits once the
+// keepalive interval has passed, and the streamed response omits them. An
+// outcome that arrives before the commit is returned as usual, with its
+// real status.
+func (c S3ApiController) completeMultipartUploadWithKeepalive(ctx fiber.Ctx, input *s3.CompleteMultipartUploadInput, location, owner string) (*Response, error) {
+	bctx := detachContext(ctx.RequestCtx())
+	reporter, reporting := c.be.(backend.CompleteMultipartUploadReporter)
+	report := newCompleteReport()
+	outcome := make(chan pendingOutcome, 1)
+	go func() {
+		var out pendingOutcome
+		// Past the keepalive interval nothing recovers this goroutine's
+		// panic: turn it into an InternalError instead of a crashed server.
+		// The stack goes to the server's log, not into the error the metrics
+		// and audit log record.
+		defer func() {
+			if r := recover(); r != nil {
+				debuglogger.Panic(fmt.Errorf("panic in CompleteMultipartUpload: %v\n%s", r, debug.Stack()))
+				out = pendingOutcome{
+					response: &Response{MetaOpts: &MetaOptions{BucketOwner: owner}},
+					err:      s3err.GetAPIError(s3err.ErrInternalError),
+				}
+			}
+			outcome <- out
+		}()
+		var res s3response.CompleteMultipartUploadResult
+		var versid string
+		var err error
+		if reporting {
+			res, versid, err = reporter.CompleteMultipartUploadReportingHeaders(bctx, input, report.report)
+			report.check(res, versid, err)
+		} else {
+			res, versid, err = c.be.CompleteMultipartUpload(bctx, input)
+		}
+		out = pendingOutcome{
+			response: completeMultipartResponse(res, versid, err, location, owner),
+			err:      err,
+		}
+	}()
+
+	var headers backend.CompleteMultipartUploadHeaders
+	if reporting {
+		select {
+		case out := <-outcome:
+			return out.response, out.err
+		case <-report.done:
+			headers = report.headers
+		}
+	} else {
+		timer := time.NewTimer(c.completeMpKeepalive)
+		defer timer.Stop()
+		select {
+		case out := <-outcome:
+			return out.response, out.err
+		case <-timer.C:
+		}
+	}
+	return &Response{
+		Headers: map[string]*string{
+			"x-amz-version-id":             &headers.VersionID,
+			"x-amz-server-side-encryption": utils.ConvertToStringPtr(headers.ServerSideEncryption),
+		},
+		MetaOpts: &MetaOptions{BucketOwner: owner},
+		pending: &pendingResponse{
+			interval: c.completeMpKeepalive,
+			outcome:  outcome,
+		},
+	}, nil
+}
+
+// completeMultipartResponse is the Response for a backend completion outcome.
+func completeMultipartResponse(res s3response.CompleteMultipartUploadResult, versid string, err error, location, owner string) *Response {
 	if err == nil {
-		objUrl := utils.GenerateObjectLocation(ctx, c.virtualDomain, bucket, key)
-		res.Location = &objUrl
+		res.Location = &location
 	}
 	return &Response{
 		Data: res,
@@ -431,10 +517,10 @@ func (c S3ApiController) CompleteMultipartUpload(ctx fiber.Ctx) (*Response, erro
 			"x-amz-server-side-encryption": utils.ConvertToStringPtr(res.ServerSideEncryption),
 		},
 		MetaOpts: &MetaOptions{
-			BucketOwner: parsedAcl.Owner,
+			BucketOwner: owner,
 			ObjectETag:  res.ETag,
 			EventName:   s3event.EventCompleteMultipartUpload,
 			VersionId:   &versid,
 		},
-	}, err
+	}
 }

@@ -284,6 +284,20 @@ func WithMpMaxParts(n int) Option {
 	return func(s *S3ApiServer) { s.Router.mpMaxParts = n }
 }
 
+// WithCompleteMultipartKeepalive keeps a slow CompleteMultipartUpload's
+// connection alive, as S3 does: the response commits to 200 OK and sends a
+// newline every interval until the result, or an <Error> document in its
+// place, ends the body. It commits when the backend reports the response
+// headers (backend.CompleteMultipartUploadReporter), with x-amz-version-id
+// and x-amz-server-side-encryption, or for any other backend once the
+// completion has run for interval, without them. A completion that
+// finishes before the commit is answered as usual. Either way, the
+// completion keeps its slot under the request limit until it finishes.
+// Zero or negative leaves the keepalive off.
+func WithCompleteMultipartKeepalive(interval time.Duration) Option {
+	return func(s *S3ApiServer) { s.Router.completeMpKeepalive = interval }
+}
+
 // WithHostStyle enabled host-style bucket addressing on the server
 func WithHostStyle(virtualDomain string) Option {
 	return func(s *S3ApiServer) {

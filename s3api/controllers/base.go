@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/fil-forge/versitygw/auth"
 	"github.com/fil-forge/versitygw/backend"
@@ -42,6 +43,10 @@ type S3ApiController struct {
 	readonly      bool
 	disableACL    bool
 	virtualDomain string
+	// completeMpKeepalive, when positive, is how long a CompleteMultipartUpload
+	// may run before its response turns into a streamed 200 that sends
+	// whitespace at this interval (see completeMultipartUploadWithKeepalive).
+	completeMpKeepalive time.Duration
 }
 
 const (
@@ -62,17 +67,18 @@ var (
 	xmlhdr = []byte(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
 )
 
-func New(be backend.Backend, iam auth.IAMService, logger s3log.AuditLogger, evs s3event.S3EventSender, mm metrics.Manager, readonly, disableACL bool, virtualDomain string, mpMaxParts int) S3ApiController {
+func New(be backend.Backend, iam auth.IAMService, logger s3log.AuditLogger, evs s3event.S3EventSender, mm metrics.Manager, readonly, disableACL bool, virtualDomain string, mpMaxParts int, completeMpKeepalive time.Duration) S3ApiController {
 	return S3ApiController{
-		be:            be,
-		iam:           iam,
-		logger:        logger,
-		evSender:      evs,
-		readonly:      readonly,
-		mm:            mm,
-		disableACL:    disableACL,
-		virtualDomain: virtualDomain,
-		mpMaxParts:    mpMaxParts,
+		be:                  be,
+		iam:                 iam,
+		logger:              logger,
+		evSender:            evs,
+		readonly:            readonly,
+		mm:                  mm,
+		disableACL:          disableACL,
+		virtualDomain:       virtualDomain,
+		mpMaxParts:          mpMaxParts,
+		completeMpKeepalive: completeMpKeepalive,
 	}
 }
 
@@ -111,6 +117,9 @@ type Response struct {
 	Data     any
 	Headers  map[string]*string
 	MetaOpts *MetaOptions
+	// pending, when set, means the outcome is still being computed after the
+	// controller returned: ProcessController streams it (see streamPending).
+	pending *pendingResponse
 }
 
 // Services groups the metrics manager, s3 event sender and audit logger
@@ -195,18 +204,17 @@ func ProcessController(ctx fiber.Ctx, controller Controller, s3action string, sv
 	requestID, hostID := utils.EnsureRequestIDs(ctx)
 	ensureExposeMetaHeaders(ctx)
 
+	// The metrics, audit log and event wait for the pending outcome.
+	if response.pending != nil {
+		streamPending(ctx, response.pending, s3action, svc, requestID, hostID)
+		return nil
+	}
+
 	opts := response.MetaOpts
 	if opts == nil {
 		opts = &MetaOptions{}
 	}
-	// Send the metrics
-	if svc.MetricsManager != nil {
-		if opts.ObjectCount > 0 {
-			svc.MetricsManager.Send(ctx, err, s3action, opts.ObjectCount, opts.Status)
-		} else {
-			svc.MetricsManager.Send(ctx, err, s3action, opts.ContentLength, opts.Status)
-		}
-	}
+	sendMetrics(ctx, svc, err, s3action, opts)
 	// Handle the error case
 	if err != nil {
 		// Audit the error log
@@ -237,15 +245,7 @@ func ProcessController(ctx fiber.Ctx, controller Controller, s3action string, sv
 	// At this point, the S3 action has succeeded in the backend and
 	// the event has already occurred. This means the S3 event must be sent,
 	// even if unexpected issues arise while further parsing the response payload.
-	if svc.EventSender != nil && opts.EventName != "" {
-		svc.EventSender.SendEvent(ctx, s3event.EventMeta{
-			BucketOwner: opts.BucketOwner,
-			ObjectSize:  opts.ObjectSize,
-			ObjectETag:  opts.ObjectETag,
-			VersionId:   opts.VersionId,
-			EventName:   opts.EventName,
-		})
-	}
+	sendEvent(ctx, svc, opts)
 
 	if opts.Status == 0 {
 		opts.Status = http.StatusOK
@@ -340,6 +340,32 @@ func ProcessController(ctx fiber.Ctx, controller Controller, s3action string, sv
 	}
 
 	return ctx.Status(opts.Status).Send(res)
+}
+
+// sendMetrics reports an S3 action's outcome to the metrics manager.
+func sendMetrics(ctx fiber.Ctx, svc *Services, err error, s3action string, opts *MetaOptions) {
+	if svc.MetricsManager == nil {
+		return
+	}
+	if opts.ObjectCount > 0 {
+		svc.MetricsManager.Send(ctx, err, s3action, opts.ObjectCount, opts.Status)
+	} else {
+		svc.MetricsManager.Send(ctx, err, s3action, opts.ContentLength, opts.Status)
+	}
+}
+
+// sendEvent sends the S3 event of a successful action, if it has one.
+func sendEvent(ctx fiber.Ctx, svc *Services, opts *MetaOptions) {
+	if svc.EventSender == nil || opts.EventName == "" {
+		return
+	}
+	svc.EventSender.SendEvent(ctx, s3event.EventMeta{
+		BucketOwner: opts.BucketOwner,
+		ObjectSize:  opts.ObjectSize,
+		ObjectETag:  opts.ObjectETag,
+		VersionId:   opts.VersionId,
+		EventName:   opts.EventName,
+	})
 }
 
 func ensureExposeMetaHeaders(ctx fiber.Ctx) {

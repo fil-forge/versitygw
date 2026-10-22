@@ -47,7 +47,9 @@ func RateLimiter(limit int, mm metrics.Manager, logger s3log.AuditLogger) fiber.
 			ctx.Status(err.HTTPStatusCode)
 			return ctx.Send(err.XMLBody(requestID, hostID))
 		}
-		defer sem.Release(1)
+		permit := utils.NewRequestPermit(func() { sem.Release(1) })
+		utils.ContextKeyRequestPermit.Set(ctx, permit)
+		defer permit.Done()
 		return ctx.Next()
 	}
 }
