@@ -285,11 +285,13 @@ func WithMpMaxParts(n int) Option {
 }
 
 // WithCompleteMultipartKeepalive keeps a slow CompleteMultipartUpload's
-// connection alive, as S3 does: once the completion has run for interval,
-// the response commits to 200 OK and sends a space every interval until the
-// result, or an <Error> document in its place, ends the body. A streamed
-// response carries no x-amz-version-id header. A completion that finishes
-// within interval is answered as usual. Zero or negative leaves it off.
+// connection alive, as S3 does: the response commits to 200 OK and sends a
+// space every interval until the result, or an <Error> document in its
+// place, ends the body. It commits when the backend reports the version id
+// (backend.CompleteMultipartUploadReporter), with the id in
+// x-amz-version-id, or for any other backend once the completion has run
+// for interval, without the id. A completion that finishes before the
+// commit is answered as usual. Zero or negative leaves it off.
 func WithCompleteMultipartKeepalive(interval time.Duration) Option {
 	return func(s *S3ApiServer) { s.Router.completeMpKeepalive = interval }
 }

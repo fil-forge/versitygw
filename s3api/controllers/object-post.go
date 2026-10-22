@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/fil-forge/versitygw/auth"
+	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/debuglogger"
 	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/fil-forge/versitygw/s3err"
@@ -430,13 +431,17 @@ func (c S3ApiController) CompleteMultipartUpload(ctx fiber.Ctx) (*Response, erro
 }
 
 // completeMultipartUploadWithKeepalive runs the backend's completion in the
-// background. An outcome that arrives within the keepalive interval is
-// returned as usual; a later one is streamed as a pending response
-// (streamPending). The version id travels in a response header, which has
-// gone out by the time a streamed outcome arrives, so a streamed response
-// omits it.
+// background and streams its outcome as a pending response
+// (streamPending) once the response can commit to 200 OK. A backend that
+// reports its version id early (backend.CompleteMultipartUploadReporter)
+// commits at the report, as S3 commits its early 200 with the id in
+// x-amz-version-id. Any other backend commits once the keepalive interval
+// has passed, and the streamed response omits the id. An outcome that
+// arrives before the commit is returned as usual, with its real status.
 func (c S3ApiController) completeMultipartUploadWithKeepalive(ctx fiber.Ctx, input *s3.CompleteMultipartUploadInput, location, owner string) (*Response, error) {
 	bctx := detachContext(ctx.RequestCtx())
+	reporter, reporting := c.be.(backend.CompleteMultipartUploadReporter)
+	report := newVersionIDReport()
 	outcome := make(chan pendingOutcome, 1)
 	go func() {
 		var out pendingOutcome
@@ -451,27 +456,48 @@ func (c S3ApiController) completeMultipartUploadWithKeepalive(ctx fiber.Ctx, inp
 			}
 			outcome <- out
 		}()
-		res, versid, err := c.be.CompleteMultipartUpload(bctx, input)
+		var res s3response.CompleteMultipartUploadResult
+		var versid string
+		var err error
+		if reporting {
+			res, versid, err = reporter.CompleteMultipartUploadReportingVersionID(bctx, input, report.report)
+			report.check(versid, err)
+		} else {
+			res, versid, err = c.be.CompleteMultipartUpload(bctx, input)
+		}
 		out = pendingOutcome{
 			response: completeMultipartResponse(res, versid, err, location, owner),
 			err:      err,
 		}
 	}()
 
-	timer := time.NewTimer(c.completeMpKeepalive)
-	defer timer.Stop()
-	select {
-	case out := <-outcome:
-		return out.response, out.err
-	case <-timer.C:
-		return &Response{
-			MetaOpts: &MetaOptions{BucketOwner: owner},
-			pending: &pendingResponse{
-				interval: c.completeMpKeepalive,
-				outcome:  outcome,
-			},
-		}, nil
+	var versionID string
+	if reporting {
+		select {
+		case out := <-outcome:
+			return out.response, out.err
+		case <-report.done:
+			versionID = report.versionID
+		}
+	} else {
+		timer := time.NewTimer(c.completeMpKeepalive)
+		defer timer.Stop()
+		select {
+		case out := <-outcome:
+			return out.response, out.err
+		case <-timer.C:
+		}
 	}
+	return &Response{
+		Headers: map[string]*string{
+			"x-amz-version-id": &versionID,
+		},
+		MetaOpts: &MetaOptions{BucketOwner: owner},
+		pending: &pendingResponse{
+			interval: c.completeMpKeepalive,
+			outcome:  outcome,
+		},
+	}, nil
 }
 
 // completeMultipartResponse is the Response for a backend completion outcome.

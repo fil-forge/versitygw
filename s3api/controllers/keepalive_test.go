@@ -32,6 +32,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/metrics"
 	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/fil-forge/versitygw/s3err"
@@ -87,7 +88,10 @@ func TestCompleteMultipartUploadKeepalive_Responses(t *testing.T) {
 	tests := []struct {
 		name     string
 		complete completeFunc
-		want     streamedResponse
+		// report, when set, is a backend that reports its version id
+		// early, and replaces complete.
+		report reportingFunc
+		want   streamedResponse
 	}{
 		{
 			name:     "a completion within the interval is answered as before",
@@ -117,6 +121,71 @@ func TestCompleteMultipartUploadKeepalive_Responses(t *testing.T) {
 				Declaration: string(xmlhdr),
 				Whitespace:  true,
 				Document:    resultDoc,
+			},
+		},
+		{
+			name:   "a slow completion carries the version id it reports",
+			report: reportAfter(0, "version-1", completeAfter(slowCompletion, keepaliveETag, nil)),
+			want: streamedResponse{
+				Status:      http.StatusOK,
+				VersionID:   "version-1",
+				Declaration: string(xmlhdr),
+				Whitespace:  true,
+				Document:    resultDoc,
+			},
+		},
+		{
+			name:   "the headers wait for a report that comes after the interval",
+			report: reportAfter(2*testKeepalive, "version-1", completeAfter(slowCompletion, keepaliveETag, nil)),
+			want: streamedResponse{
+				Status:      http.StatusOK,
+				VersionID:   "version-1",
+				Declaration: string(xmlhdr),
+				Whitespace:  true,
+				Document:    resultDoc,
+			},
+		},
+		{
+			name:   "a slow completion that reports no version id streams without one",
+			report: reportAfter(0, "", completeAfterAs(slowCompletion, keepaliveETag, "", nil)),
+			want: streamedResponse{
+				Status:      http.StatusOK,
+				Declaration: string(xmlhdr),
+				Whitespace:  true,
+				Document:    resultDoc,
+			},
+		},
+		{
+			name:   "the headers go out at the report, so a later error is embedded even within the interval",
+			report: reportAfter(0, "version-1", completeAfter(testKeepalive/2, "", s3err.GetAPIError(s3err.ErrNoSuchUpload))),
+			want: streamedResponse{
+				Status:      http.StatusOK,
+				VersionID:   "version-1",
+				Declaration: string(xmlhdr),
+				Document:    noSuchUploadDoc,
+			},
+		},
+		{
+			name: "a completion that fails before reporting keeps its status",
+			report: func(ctx context.Context, _ func(string)) (s3response.CompleteMultipartUploadResult, string, error) {
+				return completeAfter(slowCompletion, "", s3err.GetAPIError(s3err.ErrNoSuchUpload))(ctx)
+			},
+			want: streamedResponse{
+				Status:      http.StatusNotFound,
+				VersionID:   "version-1",
+				Declaration: string(xmlhdr),
+				Document:    noSuchUploadDoc,
+			},
+		},
+		{
+			name:   "a slow error after a reported version id is embedded in the 200",
+			report: reportAfter(0, "version-1", completeAfter(slowCompletion, "", s3err.GetAPIError(s3err.ErrNoSuchUpload))),
+			want: streamedResponse{
+				Status:      http.StatusOK,
+				VersionID:   "version-1",
+				Declaration: string(xmlhdr),
+				Whitespace:  true,
+				Document:    noSuchUploadDoc,
 			},
 		},
 		{
@@ -156,6 +225,9 @@ func TestCompleteMultipartUploadKeepalive_Responses(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := startKeepaliveServer(t, tt.complete)
+			if tt.report != nil {
+				srv = startReportingKeepaliveServer(t, tt.report)
+			}
 			resp, err := srv.client.Do(completeRequest(t))
 			require.NoError(t, err)
 			defer resp.Body.Close()
@@ -168,15 +240,33 @@ func TestCompleteMultipartUploadKeepalive_Responses(t *testing.T) {
 // completeFunc is a backend's CompleteMultipartUpload.
 type completeFunc func(context.Context) (s3response.CompleteMultipartUploadResult, string, error)
 
+// reportingFunc is a backend's CompleteMultipartUploadReportingVersionID.
+type reportingFunc func(ctx context.Context, reportVersionID func(string)) (s3response.CompleteMultipartUploadResult, string, error)
+
 // completeAfter returns a completion that takes delay and then succeeds
 // with etag and version id "version-1", or fails with err.
 func completeAfter(delay time.Duration, etag string, err error) completeFunc {
+	return completeAfterAs(delay, etag, "version-1", err)
+}
+
+// completeAfterAs is completeAfter with versionID in place of "version-1".
+func completeAfterAs(delay time.Duration, etag, versionID string, err error) completeFunc {
 	return func(context.Context) (s3response.CompleteMultipartUploadResult, string, error) {
 		time.Sleep(delay)
 		if err != nil {
-			return s3response.CompleteMultipartUploadResult{}, "version-1", err
+			return s3response.CompleteMultipartUploadResult{}, versionID, err
 		}
-		return s3response.CompleteMultipartUploadResult{ETag: &etag}, "version-1", nil
+		return s3response.CompleteMultipartUploadResult{ETag: &etag}, versionID, nil
+	}
+}
+
+// reportAfter returns a completion that reports versionID after delay and
+// then runs complete.
+func reportAfter(delay time.Duration, versionID string, complete completeFunc) reportingFunc {
+	return func(ctx context.Context, reportVersionID func(string)) (s3response.CompleteMultipartUploadResult, string, error) {
+		time.Sleep(delay)
+		reportVersionID(versionID)
+		return complete(ctx)
 	}
 }
 
@@ -256,11 +346,12 @@ type auditedCompletion struct {
 
 func TestCompleteMultipartUploadKeepalive_SDKClient(t *testing.T) {
 	t.Run("decodes a streamed result", func(t *testing.T) {
-		srv := startKeepaliveServer(t, completeAfter(slowCompletion, keepaliveETag, nil))
+		srv := startReportingKeepaliveServer(t, reportAfter(0, "version-1", completeAfter(slowCompletion, keepaliveETag, nil)))
 		out, err := srv.sdkClient().CompleteMultipartUpload(t.Context(), sdkCompleteInput())
 		require.NoError(t, err)
 
 		assert.Equal(t, keepaliveETag, aws.ToString(out.ETag))
+		assert.Equal(t, "version-1", aws.ToString(out.VersionId))
 	})
 
 	t.Run("retries a streamed error", func(t *testing.T) {
@@ -286,7 +377,31 @@ type keepaliveServer struct {
 
 func startKeepaliveServer(t *testing.T, complete completeFunc) *keepaliveServer {
 	t.Helper()
-	be := &BackendMock{
+	return serveKeepalive(t, keepaliveBackend(complete))
+}
+
+// startReportingKeepaliveServer is startKeepaliveServer over a backend that
+// reports its version id early (backend.CompleteMultipartUploadReporter).
+func startReportingKeepaliveServer(t *testing.T, complete reportingFunc) *keepaliveServer {
+	t.Helper()
+	return serveKeepalive(t, &reportingBackend{BackendMock: keepaliveBackend(nil), complete: complete})
+}
+
+// reportingBackend is a backend.CompleteMultipartUploadReporter whose
+// reporting completion is complete.
+type reportingBackend struct {
+	*BackendMock
+	complete reportingFunc
+}
+
+func (b *reportingBackend) CompleteMultipartUploadReportingVersionID(ctx context.Context, _ *s3.CompleteMultipartUploadInput, reportVersionID func(string)) (s3response.CompleteMultipartUploadResult, string, error) {
+	return b.complete(ctx, reportVersionID)
+}
+
+// keepaliveBackend is the backend the route needs, with complete as its
+// CompleteMultipartUpload.
+func keepaliveBackend(complete completeFunc) *BackendMock {
+	return &BackendMock{
 		CompleteMultipartUploadFunc: func(ctx context.Context, _ *s3.CompleteMultipartUploadInput) (s3response.CompleteMultipartUploadResult, string, error) {
 			return complete(ctx)
 		},
@@ -300,6 +415,12 @@ func startKeepaliveServer(t *testing.T, complete completeFunc) *keepaliveServer 
 			return s3response.GetBucketVersioningOutput{}, s3err.GetAPIError(s3err.ErrNotImplemented)
 		},
 	}
+}
+
+// serveKeepalive serves be's CompleteMultipartUpload route with the
+// keepalive on.
+func serveKeepalive(t *testing.T, be backend.Backend) *keepaliveServer {
+	t.Helper()
 	ctrl := S3ApiController{be: be, completeMpKeepalive: testKeepalive}
 	audit := &recordingAuditLogger{records: make(chan auditRecord, 16)}
 	svc := &Services{Logger: audit}

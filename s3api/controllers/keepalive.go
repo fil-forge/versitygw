@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/fil-forge/versitygw/debuglogger"
@@ -180,6 +181,46 @@ func embeddedErrorBody(err error, requestID, hostID string) []byte {
 		return body
 	}
 	return doc
+}
+
+// versionIDReport is the version id a backend reports while a kept-alive
+// CompleteMultipartUpload runs
+// (backend.CompleteMultipartUploadReporter). The backend reports from its
+// goroutine; the handler's goroutine waits on done before it commits the
+// streamed response's headers.
+type versionIDReport struct {
+	once sync.Once
+	// done is closed by the first report.
+	done chan struct{}
+	// versionID is the reported id, "" for none. It is set before done
+	// closes and never changes after.
+	versionID string
+}
+
+func newVersionIDReport() *versionIDReport {
+	return &versionIDReport{done: make(chan struct{})}
+}
+
+// report records the backend's report. Only the first counts.
+func (r *versionIDReport) report(versionID string) {
+	r.once.Do(func() {
+		r.versionID = versionID
+		close(r.done)
+	})
+}
+
+// check reports a backend that broke the contract: it reported a version id
+// and the completion created another. The header may have gone out, so all
+// that is left is to log it.
+func (r *versionIDReport) check(versionID string, err error) {
+	select {
+	case <-r.done:
+	default:
+		return
+	}
+	if err == nil && r.versionID != "" && versionID != r.versionID {
+		debuglogger.InternalError(fmt.Errorf("CompleteMultipartUpload reported version id %q but created %q", r.versionID, versionID))
+	}
 }
 
 // detachedContext carries a request's user values (what RequestCtx.Value
