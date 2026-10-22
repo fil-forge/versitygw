@@ -34,6 +34,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/metrics"
+	"github.com/fil-forge/versitygw/s3api/middlewares"
 	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/fil-forge/versitygw/s3err"
 	"github.com/fil-forge/versitygw/s3log"
@@ -70,6 +71,8 @@ type requestScopedKey struct{}
 type streamedResponse struct {
 	Status    int
 	VersionID string
+	// Encryption is the x-amz-server-side-encryption header.
+	Encryption string
 	// Declaration is the XML declaration the body starts with.
 	Declaration string
 	// Whitespace reports whether whitespace preceded the document.
@@ -135,6 +138,23 @@ func TestCompleteMultipartUploadKeepalive_Responses(t *testing.T) {
 			},
 		},
 		{
+			name: "a slow completion carries the encryption it reports",
+			report: reportHeadersAfter(0, backend.CompleteMultipartUploadReport{VersionID: "version-1", ServerSideEncryption: types.ServerSideEncryptionAes256},
+				func(ctx context.Context) (s3response.CompleteMultipartUploadResult, string, error) {
+					res, versid, err := completeAfter(slowCompletion, keepaliveETag, nil)(ctx)
+					res.ServerSideEncryption = types.ServerSideEncryptionAes256
+					return res, versid, err
+				}),
+			want: streamedResponse{
+				Status:      http.StatusOK,
+				VersionID:   "version-1",
+				Encryption:  string(types.ServerSideEncryptionAes256),
+				Declaration: string(xmlhdr),
+				Whitespace:  true,
+				Document:    resultDoc,
+			},
+		},
+		{
 			name:   "the headers wait for a report that comes after the interval",
 			report: reportAfter(2*testKeepalive, "version-1", completeAfter(slowCompletion, keepaliveETag, nil)),
 			want: streamedResponse{
@@ -167,7 +187,7 @@ func TestCompleteMultipartUploadKeepalive_Responses(t *testing.T) {
 		},
 		{
 			name: "a completion that fails before reporting keeps its status",
-			report: func(ctx context.Context, _ func(string)) (s3response.CompleteMultipartUploadResult, string, error) {
+			report: func(ctx context.Context, _ func(backend.CompleteMultipartUploadReport)) (s3response.CompleteMultipartUploadResult, string, error) {
 				return completeAfter(slowCompletion, "", s3err.GetAPIError(s3err.ErrNoSuchUpload))(ctx)
 			},
 			want: streamedResponse{
@@ -241,7 +261,7 @@ func TestCompleteMultipartUploadKeepalive_Responses(t *testing.T) {
 type completeFunc func(context.Context) (s3response.CompleteMultipartUploadResult, string, error)
 
 // reportingFunc is a backend's CompleteMultipartUploadReportingVersionID.
-type reportingFunc func(ctx context.Context, reportVersionID func(string)) (s3response.CompleteMultipartUploadResult, string, error)
+type reportingFunc func(ctx context.Context, report func(backend.CompleteMultipartUploadReport)) (s3response.CompleteMultipartUploadResult, string, error)
 
 // completeAfter returns a completion that takes delay and then succeeds
 // with etag and version id "version-1", or fails with err.
@@ -263,9 +283,14 @@ func completeAfterAs(delay time.Duration, etag, versionID string, err error) com
 // reportAfter returns a completion that reports versionID after delay and
 // then runs complete.
 func reportAfter(delay time.Duration, versionID string, complete completeFunc) reportingFunc {
-	return func(ctx context.Context, reportVersionID func(string)) (s3response.CompleteMultipartUploadResult, string, error) {
+	return reportHeadersAfter(delay, backend.CompleteMultipartUploadReport{VersionID: versionID}, complete)
+}
+
+// reportHeadersAfter is reportAfter with a whole report.
+func reportHeadersAfter(delay time.Duration, headers backend.CompleteMultipartUploadReport, complete completeFunc) reportingFunc {
+	return func(ctx context.Context, report func(backend.CompleteMultipartUploadReport)) (s3response.CompleteMultipartUploadResult, string, error) {
 		time.Sleep(delay)
-		reportVersionID(versionID)
+		report(headers)
 		return complete(ctx)
 	}
 }
@@ -367,6 +392,50 @@ func TestCompleteMultipartUploadKeepalive_SDKClient(t *testing.T) {
 	})
 }
 
+// A streamed completion keeps its slot under the request limit until the
+// backend call returns, though the handler returned when the response
+// committed.
+func TestCompleteMultipartUploadKeepalive_HoldsTheRequestPermit(t *testing.T) {
+	release := make(chan struct{})
+	var calls atomic.Int32
+	srv := serveKeepalive(t, &reportingBackend{BackendMock: keepaliveBackend(nil), complete: func(ctx context.Context, report func(backend.CompleteMultipartUploadReport)) (s3response.CompleteMultipartUploadResult, string, error) {
+		report(backend.CompleteMultipartUploadReport{VersionID: "version-1"})
+		if calls.Add(1) == 1 {
+			<-release
+		}
+		return completeAfter(0, keepaliveETag, nil)(ctx)
+	}}, 1)
+
+	first, err := srv.client.Do(completeRequest(t))
+	require.NoError(t, err)
+	defer first.Body.Close()
+	require.Equal(t, http.StatusOK, first.StatusCode)
+
+	// The first completion is still running, and holds the only slot.
+	second, err := srv.client.Do(completeRequest(t))
+	require.NoError(t, err)
+	_, _ = io.Copy(io.Discard, second.Body)
+	second.Body.Close()
+	assert.Equal(t, http.StatusServiceUnavailable, second.StatusCode)
+
+	close(release)
+	_, err = io.Copy(io.Discard, first.Body)
+	require.NoError(t, err)
+	first.Body.Close()
+
+	// The body closes after the last chunk is written, so the slot may come
+	// back a moment after the client has read it all.
+	assert.Eventually(t, func() bool {
+		third, err := srv.client.Do(completeRequest(t))
+		if err != nil {
+			return false
+		}
+		_, _ = io.Copy(io.Discard, third.Body)
+		third.Body.Close()
+		return third.StatusCode == http.StatusOK
+	}, time.Second, testKeepalive)
+}
+
 // keepaliveServer serves the CompleteMultipartUpload route with the
 // keepalive on, over an in-memory listener.
 type keepaliveServer struct {
@@ -377,14 +446,14 @@ type keepaliveServer struct {
 
 func startKeepaliveServer(t *testing.T, complete completeFunc) *keepaliveServer {
 	t.Helper()
-	return serveKeepalive(t, keepaliveBackend(complete))
+	return serveKeepalive(t, keepaliveBackend(complete), 0)
 }
 
 // startReportingKeepaliveServer is startKeepaliveServer over a backend that
 // reports its version id early (backend.CompleteMultipartUploadReporter).
 func startReportingKeepaliveServer(t *testing.T, complete reportingFunc) *keepaliveServer {
 	t.Helper()
-	return serveKeepalive(t, &reportingBackend{BackendMock: keepaliveBackend(nil), complete: complete})
+	return serveKeepalive(t, &reportingBackend{BackendMock: keepaliveBackend(nil), complete: complete}, 0)
 }
 
 // reportingBackend is a backend.CompleteMultipartUploadReporter whose
@@ -394,8 +463,8 @@ type reportingBackend struct {
 	complete reportingFunc
 }
 
-func (b *reportingBackend) CompleteMultipartUploadReportingVersionID(ctx context.Context, _ *s3.CompleteMultipartUploadInput, reportVersionID func(string)) (s3response.CompleteMultipartUploadResult, string, error) {
-	return b.complete(ctx, reportVersionID)
+func (b *reportingBackend) CompleteMultipartUploadReportingVersionID(ctx context.Context, _ *s3.CompleteMultipartUploadInput, report func(backend.CompleteMultipartUploadReport)) (s3response.CompleteMultipartUploadResult, string, error) {
+	return b.complete(ctx, report)
 }
 
 // keepaliveBackend is the backend the route needs, with complete as its
@@ -418,14 +487,17 @@ func keepaliveBackend(complete completeFunc) *BackendMock {
 }
 
 // serveKeepalive serves be's CompleteMultipartUpload route with the
-// keepalive on.
-func serveKeepalive(t *testing.T, be backend.Backend) *keepaliveServer {
+// keepalive on, under a request limit of limit when it is positive.
+func serveKeepalive(t *testing.T, be backend.Backend, limit int) *keepaliveServer {
 	t.Helper()
 	ctrl := S3ApiController{be: be, completeMpKeepalive: testKeepalive}
 	audit := &recordingAuditLogger{records: make(chan auditRecord, 16)}
 	svc := &Services{Logger: audit}
 
 	app := fiber.New()
+	if limit > 0 {
+		app.Use(middlewares.RateLimiter(limit, nil, nil))
+	}
 	app.Post("/:bucket/*", ProcessHandlers(ctrl.CompleteMultipartUpload, metrics.ActionCompleteMultipartUpload, svc,
 		func(ctx fiber.Ctx) error {
 			for key, local := range defaultLocals {
@@ -519,6 +591,7 @@ func readStreamedResponse(t *testing.T, resp *http.Response) streamedResponse {
 	return streamedResponse{
 		Status:      resp.StatusCode,
 		VersionID:   resp.Header.Get("x-amz-version-id"),
+		Encryption:  resp.Header.Get("x-amz-server-side-encryption"),
 		Declaration: string(declaration),
 		Whitespace:  len(document) < len(rest),
 		Document:    string(document),

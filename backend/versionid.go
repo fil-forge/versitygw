@@ -18,24 +18,38 @@ import (
 	"context"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/fil-forge/versitygw/s3response"
 )
 
 // CompleteMultipartUploadReporter is a Backend that can report a
-// CompleteMultipartUpload's version id before the completion finishes. With
-// s3api.WithCompleteMultipartKeepalive, the response commits its headers at
-// the report, as S3 commits its early 200 with x-amz-version-id, and pads the
-// body until the result. A Backend without it streams only a completion that
-// outlasts the keepalive interval, and without the header.
+// CompleteMultipartUpload's response headers before the completion
+// finishes. With s3api.WithCompleteMultipartKeepalive, the response commits
+// its headers at the report, as S3 commits its early 200 with
+// x-amz-version-id and x-amz-server-side-encryption, and pads the body until
+// the result. A Backend without it streams only a completion that outlasts
+// the keepalive interval, and without those headers.
 type CompleteMultipartUploadReporter interface {
 	// CompleteMultipartUploadReportingVersionID is CompleteMultipartUpload
-	// that reports the version id it will create before doing any slow
-	// work: reportVersionID(id), or reportVersionID("") to send the headers
-	// without one. The response sends its headers at the report and nothing
-	// before it, so a backend that reports late leaves its client without a
-	// keepalive, and an error after the report can only go in the 200's
-	// body. It reports at most once. A reported id is binding: a successful
-	// result must carry it. Returning without reporting is allowed, and the
-	// response is then the usual one, with its real status.
-	CompleteMultipartUploadReportingVersionID(ctx context.Context, input *s3.CompleteMultipartUploadInput, reportVersionID func(versionID string)) (_ s3response.CompleteMultipartUploadResult, versionid string, _ error)
+	// that reports the version id and encryption of the object it will
+	// create before doing any slow work. The response sends its headers at
+	// the report and nothing before it, so a backend that reports late
+	// leaves its client without a keepalive, and an error after the report
+	// can only go in the 200's body. It reports at most once. A report is
+	// binding: a successful result must carry its version id, unless it
+	// reported none, and its encryption. Returning without reporting is
+	// allowed, and the response is then the usual one, with its real
+	// status.
+	CompleteMultipartUploadReportingVersionID(ctx context.Context, input *s3.CompleteMultipartUploadInput, report func(CompleteMultipartUploadReport)) (_ s3response.CompleteMultipartUploadResult, versionid string, _ error)
+}
+
+// CompleteMultipartUploadReport is what a CompleteMultipartUpload reports
+// before its slow work: the headers of its response's early 200.
+type CompleteMultipartUploadReport struct {
+	// VersionID is the x-amz-version-id of the version the completion will
+	// create, or "" to send the headers without one.
+	VersionID string
+	// ServerSideEncryption is the x-amz-server-side-encryption of the
+	// object the completion will create, or "" for none.
+	ServerSideEncryption types.ServerSideEncryption
 }

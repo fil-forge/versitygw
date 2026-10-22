@@ -433,15 +433,16 @@ func (c S3ApiController) CompleteMultipartUpload(ctx fiber.Ctx) (*Response, erro
 // completeMultipartUploadWithKeepalive runs the backend's completion in the
 // background and streams its outcome as a pending response
 // (streamPending) once the response can commit to 200 OK. A backend that
-// reports its version id early (backend.CompleteMultipartUploadReporter)
-// commits at the report, as S3 commits its early 200 with the id in
-// x-amz-version-id. Any other backend commits once the keepalive interval
-// has passed, and the streamed response omits the id. An outcome that
-// arrives before the commit is returned as usual, with its real status.
+// reports its response headers early (backend.CompleteMultipartUploadReporter)
+// commits at the report, as S3 commits its early 200 with x-amz-version-id
+// and x-amz-server-side-encryption. Any other backend commits once the
+// keepalive interval has passed, and the streamed response omits them. An
+// outcome that arrives before the commit is returned as usual, with its
+// real status.
 func (c S3ApiController) completeMultipartUploadWithKeepalive(ctx fiber.Ctx, input *s3.CompleteMultipartUploadInput, location, owner string) (*Response, error) {
 	bctx := detachContext(ctx.RequestCtx())
 	reporter, reporting := c.be.(backend.CompleteMultipartUploadReporter)
-	report := newVersionIDReport()
+	report := newCompleteReport()
 	outcome := make(chan pendingOutcome, 1)
 	go func() {
 		var out pendingOutcome
@@ -461,7 +462,7 @@ func (c S3ApiController) completeMultipartUploadWithKeepalive(ctx fiber.Ctx, inp
 		var err error
 		if reporting {
 			res, versid, err = reporter.CompleteMultipartUploadReportingVersionID(bctx, input, report.report)
-			report.check(versid, err)
+			report.check(res, versid, err)
 		} else {
 			res, versid, err = c.be.CompleteMultipartUpload(bctx, input)
 		}
@@ -471,13 +472,13 @@ func (c S3ApiController) completeMultipartUploadWithKeepalive(ctx fiber.Ctx, inp
 		}
 	}()
 
-	var versionID string
+	var headers backend.CompleteMultipartUploadReport
 	if reporting {
 		select {
 		case out := <-outcome:
 			return out.response, out.err
 		case <-report.done:
-			versionID = report.versionID
+			headers = report.headers
 		}
 	} else {
 		timer := time.NewTimer(c.completeMpKeepalive)
@@ -490,7 +491,8 @@ func (c S3ApiController) completeMultipartUploadWithKeepalive(ctx fiber.Ctx, inp
 	}
 	return &Response{
 		Headers: map[string]*string{
-			"x-amz-version-id": &versionID,
+			"x-amz-version-id":             &headers.VersionID,
+			"x-amz-server-side-encryption": utils.ConvertToStringPtr(headers.ServerSideEncryption),
 		},
 		MetaOpts: &MetaOptions{BucketOwner: owner},
 		pending: &pendingResponse{

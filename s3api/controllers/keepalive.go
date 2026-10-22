@@ -24,9 +24,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fil-forge/versitygw/backend"
 	"github.com/fil-forge/versitygw/debuglogger"
+	"github.com/fil-forge/versitygw/s3api/utils"
 	"github.com/fil-forge/versitygw/s3err"
 	"github.com/fil-forge/versitygw/s3log"
+	"github.com/fil-forge/versitygw/s3response"
 	"github.com/gofiber/fiber/v3"
 	"github.com/valyala/fasthttp"
 )
@@ -70,6 +73,9 @@ func streamPending(ctx fiber.Ctx, p *pendingResponse, s3action string, svc *Serv
 		outcome: p.outcome,
 		ticker:  time.NewTicker(p.interval),
 		queued:  xmlhdr,
+		// The backend call holds its request's slot under the request limit
+		// until it returns, not just until the handler does.
+		releasePermit: utils.HoldRequestPermit(ctx),
 		finish: func(out pendingOutcome) []byte {
 			return finishPending(ctx, out, s3action, svc, requestID, hostID)
 		},
@@ -88,6 +94,8 @@ type keepaliveBody struct {
 	queued []byte
 	// finished is set once the outcome has been received and recorded.
 	finished bool
+	// releasePermit frees the request's slot under the request limit.
+	releasePermit func()
 }
 
 var keepaliveNewline = []byte("\n")
@@ -114,13 +122,15 @@ func (b *keepaliveBody) Read(p []byte) (int, error) {
 // waits for the outcome and records it. Holding the request until then also
 // keeps the backend's detached context valid (detachContext) and lets
 // request-scoped state that ends with the request, such as a tracing span,
-// cover the whole call.
+// cover the whole call, and keeps the call's slot under the request limit
+// taken until it returns.
 func (b *keepaliveBody) Close() error {
 	b.ticker.Stop()
 	if !b.finished {
 		b.finish(<-b.outcome)
 		b.finished = true
 	}
+	b.releasePermit()
 	return nil
 }
 
@@ -183,43 +193,48 @@ func embeddedErrorBody(err error, requestID, hostID string) []byte {
 	return doc
 }
 
-// versionIDReport is the version id a backend reports while a kept-alive
-// CompleteMultipartUpload runs
-// (backend.CompleteMultipartUploadReporter). The backend reports from its
-// goroutine; the handler's goroutine waits on done before it commits the
-// streamed response's headers.
-type versionIDReport struct {
+// completeReport is what a backend reports while a kept-alive
+// CompleteMultipartUpload runs (backend.CompleteMultipartUploadReporter).
+// The backend reports from its goroutine; the handler's goroutine waits on
+// done before it commits the streamed response's headers.
+type completeReport struct {
 	once sync.Once
 	// done is closed by the first report.
 	done chan struct{}
-	// versionID is the reported id, "" for none. It is set before done
-	// closes and never changes after.
-	versionID string
+	// headers is the first report. It is set before done closes and never
+	// changes after.
+	headers backend.CompleteMultipartUploadReport
 }
 
-func newVersionIDReport() *versionIDReport {
-	return &versionIDReport{done: make(chan struct{})}
+func newCompleteReport() *completeReport {
+	return &completeReport{done: make(chan struct{})}
 }
 
 // report records the backend's report. Only the first counts.
-func (r *versionIDReport) report(versionID string) {
+func (r *completeReport) report(headers backend.CompleteMultipartUploadReport) {
 	r.once.Do(func() {
-		r.versionID = versionID
+		r.headers = headers
 		close(r.done)
 	})
 }
 
-// check reports a backend that broke the contract: it reported a version id
-// and the completion created another. The header may have gone out, so all
-// that is left is to log it.
-func (r *versionIDReport) check(versionID string, err error) {
+// check reports a backend that broke the contract: the completion created
+// a version or an encryption other than the one it reported. The headers
+// may have gone out, so all that is left is to log it.
+func (r *completeReport) check(res s3response.CompleteMultipartUploadResult, versionID string, err error) {
 	select {
 	case <-r.done:
 	default:
 		return
 	}
-	if err == nil && r.versionID != "" && versionID != r.versionID {
-		debuglogger.InternalError(fmt.Errorf("CompleteMultipartUpload reported version id %q but created %q", r.versionID, versionID))
+	if err != nil {
+		return
+	}
+	if r.headers.VersionID != "" && versionID != r.headers.VersionID {
+		debuglogger.InternalError(fmt.Errorf("CompleteMultipartUpload reported version id %q but created %q", r.headers.VersionID, versionID))
+	}
+	if res.ServerSideEncryption != r.headers.ServerSideEncryption {
+		debuglogger.InternalError(fmt.Errorf("CompleteMultipartUpload reported encryption %q but created %q", r.headers.ServerSideEncryption, res.ServerSideEncryption))
 	}
 }
 
