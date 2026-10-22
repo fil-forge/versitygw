@@ -515,7 +515,7 @@ func readStreamedResponse(t *testing.T, resp *http.Response) streamedResponse {
 	if i := bytes.IndexByte(body, '\n'); i >= 0 {
 		declaration, rest = body[:i+1], body[i+1:]
 	}
-	document := bytes.TrimLeft(rest, " ")
+	document := bytes.TrimLeft(rest, "\n")
 	return streamedResponse{
 		Status:      resp.StatusCode,
 		VersionID:   resp.Header.Get("x-amz-version-id"),

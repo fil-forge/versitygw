@@ -55,10 +55,10 @@ type pendingOutcome struct {
 }
 
 // streamPending sends a pending response as a 200 whose body S3 clients
-// read as the eventual result: the XML declaration at once, a space every
-// interval (XML allows whitespace before the root element), then the result
-// document (keepaliveBody). The metrics, audit log and event run once the
-// outcome is known, and report it.
+// read as the eventual result: the XML declaration at once, a newline every
+// interval as S3 sends (XML allows whitespace before the root element), then
+// the result document (keepaliveBody). The metrics, audit log and event run
+// once the outcome is known, and report it.
 func streamPending(ctx fiber.Ctx, p *pendingResponse, s3action string, svc *Services, requestID, hostID string) {
 	// The body reports through ctx after the handler has returned. fiber
 	// never pools an abandoned ctx (it is garbage collected instead), so ctx
@@ -90,7 +90,7 @@ type keepaliveBody struct {
 	finished bool
 }
 
-var keepaliveSpace = []byte(" ")
+var keepaliveNewline = []byte("\n")
 
 func (b *keepaliveBody) Read(p []byte) (int, error) {
 	for len(b.queued) == 0 {
@@ -102,7 +102,7 @@ func (b *keepaliveBody) Read(p []byte) (int, error) {
 			b.queued = b.finish(out)
 			b.finished = true
 		case <-b.ticker.C:
-			b.queued = keepaliveSpace
+			b.queued = keepaliveNewline
 		}
 	}
 	n := copy(p, b.queued)

@@ -286,7 +286,7 @@ func WithMpMaxParts(n int) Option {
 
 // WithCompleteMultipartKeepalive keeps a slow CompleteMultipartUpload's
 // connection alive, as S3 does: the response commits to 200 OK and sends a
-// space every interval until the result, or an <Error> document in its
+// newline every interval until the result, or an <Error> document in its
 // place, ends the body. It commits when the backend reports the version id
 // (backend.CompleteMultipartUploadReporter), with the id in
 // x-amz-version-id, or for any other backend once the completion has run
