@@ -588,10 +588,17 @@ func readStreamedResponse(t *testing.T, resp *http.Response) streamedResponse {
 		declaration, rest = body[:i+1], body[i+1:]
 	}
 	document := bytes.TrimLeft(rest, "\n")
+	// A header with nothing to say is left out, never sent empty.
+	header := func(name string) string {
+		if vs, ok := resp.Header[http.CanonicalHeaderKey(name)]; ok && (len(vs) == 0 || vs[0] == "") {
+			t.Errorf("response sends an empty %s header", name)
+		}
+		return resp.Header.Get(name)
+	}
 	return streamedResponse{
 		Status:      resp.StatusCode,
-		VersionID:   resp.Header.Get("x-amz-version-id"),
-		Encryption:  resp.Header.Get("x-amz-server-side-encryption"),
+		VersionID:   header("x-amz-version-id"),
+		Encryption:  header("x-amz-server-side-encryption"),
 		Declaration: string(declaration),
 		Whitespace:  len(document) < len(rest),
 		Document:    string(document),
