@@ -16,6 +16,7 @@ package utils
 
 import (
 	"crypto/tls"
+	"errors"
 	"io"
 	"net"
 	"testing"
@@ -121,11 +122,11 @@ func TestMultiListenerClose(t *testing.T) {
 		t.Errorf("Close() returned error: %v", err)
 	}
 
-	// The accept should now return an error
+	// The accept should now return net.ErrClosed, as a closed net.Listener does
 	select {
 	case err := <-acceptErrors:
-		if err == nil {
-			t.Error("Accept() should fail after Close()")
+		if !errors.Is(err, net.ErrClosed) {
+			t.Errorf("Accept() after Close() error = %v, want net.ErrClosed", err)
 		}
 	case <-time.After(2 * time.Second):
 		t.Error("Accept() did not return after Close()")
@@ -133,8 +134,8 @@ func TestMultiListenerClose(t *testing.T) {
 
 	// Try to accept after close - should fail immediately
 	_, err = ml.Accept()
-	if err == nil {
-		t.Error("Accept() should fail after Close() on subsequent calls")
+	if !errors.Is(err, net.ErrClosed) {
+		t.Errorf("Accept() on a closed listener error = %v, want net.ErrClosed", err)
 	}
 }
 
