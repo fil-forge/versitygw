@@ -106,21 +106,25 @@ func TestS3ApiServer_ServeMultiPortReturnsNilAfterShutDown(t *testing.T) {
 
 	served := make(chan error, 1)
 	go func() { served <- server.ServeMultiPort([]string{addr}) }()
+	t.Cleanup(func() { _ = server.ShutDown() })
 
 	// A response, not just an accepted connection, means the server is
 	// serving, so ShutDown has its listener to close.
 	client := &http.Client{Timeout: time.Second}
-	deadline := time.Now().Add(5 * time.Second)
+	deadline := time.After(5 * time.Second)
 	for {
 		resp, err := client.Get("http://" + addr + "/")
 		if err == nil {
 			resp.Body.Close()
 			break
 		}
-		if time.Now().After(deadline) {
+		select {
+		case serveErr := <-served:
+			t.Fatalf("ServeMultiPort() returned before serving: %v", serveErr)
+		case <-deadline:
 			t.Fatalf("server never served: %v", err)
+		case <-time.After(10 * time.Millisecond):
 		}
-		time.Sleep(10 * time.Millisecond)
 	}
 
 	if err := server.ShutDown(); err != nil {
