@@ -16,7 +16,6 @@ package utils
 
 import (
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -87,15 +86,18 @@ func (ml *MultiListener) acceptLoop(ln net.Listener) {
 	}
 }
 
-// Accept waits for and returns the next connection from any of the listeners
+// Accept waits for and returns the next connection from any of the listeners.
+// Once the MultiListener is closed it returns net.ErrClosed, as a closed
+// net.Listener does, so a server serving it (fasthttp included) treats the
+// close as a shutdown rather than a failure.
 func (ml *MultiListener) Accept() (net.Conn, error) {
 	select {
 	case <-ml.closeCh:
-		return nil, errors.New("listener closed")
+		return nil, net.ErrClosed
 	case result, ok := <-ml.acceptCh:
 		if !ok {
 			// Channel closed
-			return nil, errors.New("listener closed")
+			return nil, net.ErrClosed
 		}
 		return result.conn, result.err
 	}

@@ -90,6 +90,52 @@ func TestS3ApiServer_Serve(t *testing.T) {
 	}
 }
 
+// ShutDown closes the server's listener, which ends ServeMultiPort cleanly
+// rather than as a failure.
+func TestS3ApiServer_ServeMultiPortReturnsNilAfterShutDown(t *testing.T) {
+	server, err := newTestS3ApiServer()
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("reserve a port: %v", err)
+	}
+	addr := ln.Addr().String()
+	ln.Close()
+
+	served := make(chan error, 1)
+	go func() { served <- server.ServeMultiPort([]string{addr}) }()
+
+	// A response, not just an accepted connection, means the server is
+	// serving, so ShutDown has its listener to close.
+	client := &http.Client{Timeout: time.Second}
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		resp, err := client.Get("http://" + addr + "/")
+		if err == nil {
+			resp.Body.Close()
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("server never served: %v", err)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	if err := server.ShutDown(); err != nil {
+		t.Fatalf("ShutDown() error = %v", err)
+	}
+	select {
+	case err := <-served:
+		if err != nil {
+			t.Errorf("ServeMultiPort() error = %v, want nil after ShutDown", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("ServeMultiPort() did not return after ShutDown")
+	}
+}
+
 func TestWithRouteRegistersBeforeMiddleware(t *testing.T) {
 	const routePath = "/custom/route"
 
