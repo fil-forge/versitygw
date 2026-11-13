@@ -20,6 +20,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -137,6 +138,49 @@ func TestS3ApiServer_ServeMultiPortReturnsNilAfterShutDown(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("ServeMultiPort() did not return after ShutDown")
+	}
+}
+
+func TestWithServerHeader(t *testing.T) {
+	tests := []struct {
+		name string
+		opts []Option
+		want []string
+	}{
+		{name: "default", want: []string{"VERSITYGW"}},
+		{name: "custom value", opts: []Option{WithServerHeader("custom")}, want: []string{"custom"}},
+		{name: "empty value sends no header", opts: []Option{WithServerHeader("")}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server, err := newTestS3ApiServer(tt.opts...)
+			if err != nil {
+				t.Fatalf("New() error = %v", err)
+			}
+
+			// The Server header is written when the response is serialized,
+			// so the request has to cross a real connection.
+			ln := fasthttputil.NewInmemoryListener()
+			go func() { _ = server.app.Server().Serve(ln) }()
+			t.Cleanup(func() { _ = ln.Close() })
+
+			client := &http.Client{Transport: &http.Transport{
+				DialContext: func(context.Context, string, string) (net.Conn, error) { return ln.Dial() },
+			}}
+			resp, err := client.Get("http://gateway/")
+			if err != nil {
+				t.Fatalf("GET error = %v", err)
+			}
+			defer func() {
+				if err := resp.Body.Close(); err != nil {
+					t.Fatalf("response close error = %v", err)
+				}
+			}()
+
+			if got := resp.Header.Values("Server"); !slices.Equal(got, tt.want) {
+				t.Fatalf("Server header = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 

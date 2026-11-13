@@ -45,6 +45,10 @@ const (
 	requestHeaderMaxSize = 8 * 1024
 )
 
+// defaultServerHeader is the Server response header sent unless
+// WithServerHeader overrides it.
+const defaultServerHeader = "VERSITYGW"
+
 type S3ApiServer struct {
 	Router           *S3ApiRouter
 	app              *fiber.App
@@ -61,6 +65,7 @@ type S3ApiServer struct {
 	middlewares      []middlewareMount
 	socketPerm       os.FileMode
 	onListen         func()
+	serverHeader     string
 }
 
 type routeMount struct {
@@ -88,7 +93,8 @@ func New(
 	opts ...Option,
 ) (*S3ApiServer, error) {
 	server := &S3ApiServer{
-		backend: be,
+		backend:      be,
+		serverHeader: defaultServerHeader,
 		Router: &S3ApiRouter{
 			be:      be,
 			iam:     iam,
@@ -106,7 +112,7 @@ func New(
 
 	app := fiber.New(fiber.Config{
 		AppName:           "versitygw",
-		ServerHeader:      "VERSITYGW",
+		ServerHeader:      server.serverHeader,
 		StreamRequestBody: true,
 		DisableKeepalive:  !server.keepAlive,
 		ErrorHandler:      globalErrorHandler,
@@ -263,6 +269,12 @@ func WithRootUser(root middlewares.RootUserConfig) Option {
 // WithAdminServer runs admin endpoints with the gateway in the same network
 func WithAdminServer() Option {
 	return func(s *S3ApiServer) { s.Router.WithAdmSrv = true }
+}
+
+// WithServerHeader sets the value of the Server response header. An empty
+// value sends no Server header.
+func WithServerHeader(value string) Option {
+	return func(s *S3ApiServer) { s.serverHeader = value }
 }
 
 // WithQuiet silences default logging output
