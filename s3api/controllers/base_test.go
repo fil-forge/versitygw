@@ -711,3 +711,25 @@ func TestWrapMiddleware(t *testing.T) {
 		})
 	}
 }
+
+func TestProcessController_RequestIDHeadersSentOnce(t *testing.T) {
+	ctx := fiber.New().AcquireCtx(&fasthttp.RequestCtx{})
+
+	// The RequestIDs middleware writes the headers before the controller runs.
+	requestID, hostID := utils.EnsureRequestIDs(ctx)
+
+	err := ProcessController(ctx, func(fiber.Ctx) (*Response, error) {
+		return &Response{
+			Headers: map[string]*string{"ETag": utils.GetStringPtr("etag")},
+		}, nil
+	}, metrics.ActionGetObject, &Services{})
+	assert.NoError(t, err)
+
+	got := map[string][]string{}
+	for key, value := range ctx.Response().Header.All() {
+		name := strings.ToLower(string(key))
+		got[name] = append(got[name], string(value))
+	}
+	assert.Equal(t, []string{requestID}, got["x-amz-request-id"])
+	assert.Equal(t, []string{hostID}, got["x-amz-id-2"])
+}
