@@ -23,8 +23,11 @@ import (
 )
 
 const (
-	HeaderAmzRequestID = "x-amz-request-id"
-	HeaderAmzID2       = "x-amz-id-2"
+	// The request ID header names are spelled in canonical form so that a
+	// write or lookup addresses the same header whether or not header name
+	// normalization is enabled on the response at that point.
+	HeaderAmzRequestID = "X-Amz-Request-Id"
+	HeaderAmzID2       = "X-Amz-Id-2"
 
 	s3RequestIDAlphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
