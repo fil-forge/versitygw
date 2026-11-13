@@ -161,12 +161,22 @@ func TestWithServerHeader(t *testing.T) {
 			// The Server header is written when the response is serialized,
 			// so the request has to cross a real connection.
 			ln := fasthttputil.NewInmemoryListener()
-			go func() { _ = server.app.Server().Serve(ln) }()
-			t.Cleanup(func() { _ = ln.Close() })
+			serveErr := make(chan error, 1)
+			go func() { serveErr <- server.app.Server().Serve(ln) }()
+			t.Cleanup(func() {
+				_ = ln.Close()
+				if err := <-serveErr; err != nil {
+					t.Errorf("Serve() error = %v", err)
+				}
+			})
 
-			client := &http.Client{Transport: &http.Transport{
-				DialContext: func(context.Context, string, string) (net.Conn, error) { return ln.Dial() },
-			}}
+			client := &http.Client{
+				Transport: &http.Transport{
+					DialContext: func(context.Context, string, string) (net.Conn, error) { return ln.Dial() },
+				},
+				// A server that stopped early fails the request here.
+				Timeout: 5 * time.Second,
+			}
 			resp, err := client.Get("http://gateway/")
 			if err != nil {
 				t.Fatalf("GET error = %v", err)
